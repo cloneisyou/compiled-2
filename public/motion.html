@@ -129,6 +129,15 @@ function mascot(x, y, px) {
   return add(m.join('').split('').map((c) => `<i class="${c === 'b' ? 'b' : c === 'e' ? 'e' : ''}"></i>`).join(''), { left: x + 'px', top: y + 'px', width: px * 13 + 'px' }, 'mascot');
 }
 
+const loads = [];
+function realClip(dir, n, tIn, tOut) {
+  const wrap = add(`<div style="text-align:center;margin-bottom:10px"><span class="pill blue" style="background:#0c1322;color:#fff">● Real app · live · Min + Jun</span></div><canvas width="2560" height="990" style="width:1264px;height:489px;display:block;border-radius:14px;box-shadow:0 0 0 1px var(--line),0 18px 50px rgba(20,50,110,.14)"></canvas>`, { left: '8px', top: '142px', width: '1264px' });
+  const cv = wrap.querySelector('canvas'), g = cv.getContext('2d');
+  const imgs = Array.from({ length: n }, (_, i) => { const im = new Image(); loads.push(new Promise((r) => { im.onload = r; im.onerror = r; })); im.src = `/real/${dir}/${String(i + 1).padStart(3, '0')}.jpg`; return im; });
+  let last = -1;
+  hooks.push((t) => { const i = Math.max(0, Math.min(n - 1, Math.floor((t - tIn - .3) * 30))); if (i !== last && imgs[i].complete && imgs[i].naturalWidth) { g.drawImage(imgs[i], 0, 0); last = i; } });
+  show(wrap, tIn, tOut, 'up', .5);
+}
 // ───────── S1  0–4.3  AI is single-player.
 headline('AI is <b>single-player.</b>', 232, 84, .35, 4.2);
 [['M', C.M, 150, 430, -60], ['J', C.J, 515, 452, 0], ['S', C.S, 880, 430, 60]].forEach(([n, c, x, y, dx], i) => {
@@ -181,13 +190,14 @@ headline('Ask anyone. <b>Their Clone</b> answers.', 62, 60, 23.25, 35.4);
   const c = composer(280, 300, 720, '<span id="t5"></span><span class="caret"></span>'); c.classList.add('glow'); c.style.scale = '1.2'; c.style.transformOrigin = '50% 0';
   show(c, 23.8, null); typer(c.querySelector('#t5'), Q, 24.5, 22, mention);
   A(c, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(40px) scale(.96)', filter: 'blur(8px)' }], 28.0, .45, { fill: 'forwards', easing: 'ease-in' });
-  const b = add(mention(Q), { right: '200px', top: '186px' }, 'bubble'); show(b, 28.15, 35.3);
+  const b = add(mention(Q), { right: '200px', top: '186px' }, 'bubble'); show(b, 28.15, 31.2);
   const r = add(`<div class="who">${av('S', C.S, 's clone')}Clone Sara<span class="note">on behalf of Sara · 96% sure</span></div>
     <div style="font-size:19px;line-height:1.5;margin-top:12px;border-left:2px dashed #d5d9df;padding-left:16px;margin-left:12px">I’d open with the product itself and show value<br/>in under 30 seconds; skip the purple gradient.</div>`,
     { left: '250px', top: '290px', width: '640px', padding: '22px 26px', scale: '1.18', transformOrigin: '0 0' }, 'card');
-  show(r, 29.4, 35.3);
+  show(r, 29.4, 31.2);
+  realClip('a', 120, 31.45, 35.3);
   const th = add(`<span style="color:#8a8f98;font-size:15px">Team AI is consulting 3 Clones…</span>`, { left: '262px', top: '262px' }); show(th, 28.5, 29.3, 'fade', .3);
-  const w = add('Sara is away. Her Clone answers the way she would.', { top: '548px' }, 'sub'); show(w, 30.6, 35.3);
+  const w = add('Sara is away. Her Clone answers the way she would.', { top: '548px' }, 'sub'); show(w, 30.6, 31.2);
 }
 // ───────── S6  35.8–46.6  Clone knows what's next.
 headline('Clone knows <b>what’s next.</b>', 150, 64, 35.85, 46.4, 'navy');
@@ -251,13 +261,14 @@ headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
   ], 290, 200);
   p.style.width = '700px'; p.style.scale = '1.2'; p.style.transformOrigin = '50% 0';
   p.insertAdjacentHTML('beforeend', `<div style="display:flex;gap:10px;margin-top:20px" id="b9"><span class="btn" id="ap9">Approve</span><span class="btn g">Reject</span><span style="flex:1"></span><span style="color:#8a8f98;font-size:13.5px;align-self:center">Only Jun sees these buttons</span></div>`);
-  show(p, 68.0, 79.3);
+  show(p, 68.0, 74.75);
+  realClip('b', 132, 75.0, 79.3);
   const bars = p.querySelectorAll('.bar i');
   A(bars[0], [{ width: '0%' }, { width: '100%' }], 68.6, .9); A(bars[1], [{ width: '0%' }, { width: '5%' }], 69.0, .9); A(bars[2], [{ width: '0%' }, { width: '85%' }], 69.4, .9);
   const b1 = add('<span class="pill wait">Needs Jun</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(b1); A(b1, FX.pop, 70.2, .45); A(b1, [{ opacity: 1 }, { opacity: 0 }], 73.0, .2, { fill: 'forwards' });
   const b2 = add('<span class="pill ok">Approved by the team</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(b2); A(b2, FX.pop, 73.15, .45);
   // Jun clicks Approve at 72.8
-  cursor('Jun', C.J, [[70.6, 1120, 600], [72.4, 300, 494], [73.6, 300, 494], [75.4, 930, 500]], 70.6, 79.2);
+  cursor('Jun', C.J, [[70.6, 1120, 600], [72.4, 300, 494], [73.6, 300, 494], [74.7, 420, 520]], 70.6, 74.6);
   const ring = add('', { left: '284px', top: '476px' }, 'ring'); A(ring, [{ opacity: .9, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], 72.8, .55, { fill: 'none' });
   A(p.querySelector('#ap9'), [{ transform: 'scale(1)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }], 72.8, .3);
   A(bars[1], [{ width: '5%', background: '#d98a00' }, { width: '100%', background: '#12a37f' }], 73.0, .8);
@@ -265,7 +276,7 @@ headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
   hooks.push((t) => { p.querySelector('#l9a').textContent = t >= 73.05 ? 'Jun' : 'Clone Jun predicts'; p.querySelector('#v9').textContent = t >= 73.05 ? 'Approved' : '5%'; });
   A(p.querySelector('#b9'), [{ opacity: 1 }, { opacity: 0 }], 73.2, .3, { fill: 'forwards' });
   const toast = add(`${av('J', C.J, 's clone')}<span><b>Clone Jun learned</b> · Accepted “Ship the demo build without the end-to-end test” although Clone predicted 5%</span>`, { left: '176px', top: '596px' }, 'toast');
-  show(toast, 74.0, 79.3, 'up', .55);
+  show(toast, 73.5, 74.75, 'up', .45);
 }
 // ───────── S10  79.8–86  end
 {
@@ -280,7 +291,7 @@ headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
 window.DURATION = 86;
 window.seek = (t) => { anims.forEach((a) => { a.currentTime = t * 1000; }); hooks.forEach((h) => h(t)); };
 window.seek(0);
-document.fonts.ready.then(() => { window.READY = true; });
+Promise.all([document.fonts.ready, ...loads]).then(() => { window.seek(0); window.READY = true; });
 const q = new URLSearchParams(location.search);
 if (!q.get('capture')) {
   const s = (innerWidth / 1280); stage.style.transformOrigin = '0 0'; stage.style.transform = `scale(${Math.min(s, innerHeight / 720)})`;

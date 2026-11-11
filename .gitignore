@@ -7,3 +7,4 @@ video/audio/*.wav
 video/audio/raw/
 video/audio/voice/*.wav
 video/dbg.mjs
+public/real/

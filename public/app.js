@@ -22,6 +22,7 @@ const PROJECTS = [['💼', 'Business'], ['🔬', 'Research'], ['📦', 'Product'
 function render() {
   const me = member(ME);
   $('app').classList.toggle('team', team);
+  $('app').classList.toggle('noside', params.get('side') === '0');
   $('account').innerHTML = `${av(me, { cls: 'sm' })}${esc(me.name)} <span class="dim">· Clonist</span>`;
   $('author').textContent = `Clone ${me.name} ⌄`;
   $('chkPersonal').textContent = team ? '' : '✓';

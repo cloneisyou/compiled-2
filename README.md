@@ -55,3 +55,5 @@ Without those variables it uses the local Codex CLI signed in with ChatGPT.
 `video/clone-team-rooms-demo.mp4` (86 s, 2560x1440). It is a motion graphic rendered frame by frame from
 `public/motion.html` (`node video/capture-mg.mjs`). The Clone replies, vote predictions and the predicted
 prompt shown in it are real model output from takes of the live app (`node video/record.mjs`).
+Two segments (0:31 and 1:15, labelled "Real app · live") are screen recordings of the running app with
+two teammates side by side (`public/stage.html`, `node video/record-real.mjs`).
