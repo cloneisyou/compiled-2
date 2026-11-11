@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Clone Team Rooms</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="top">
+    <div class="brand"><span class="logo">C</span><span>Clone</span><span class="sep">/</span><span class="ws">Team workspace</span><span class="sep">/</span><span id="roomName">Team Room</span></div>
+    <div class="goal" id="goal"></div>
+    <div class="me" id="me"></div>
+  </header>
+  <main class="layout">
+    <aside class="team">
+      <h3>Team</h3>
+      <div id="members"></div>
+      <div class="legend">
+        <div><span class="dot on"></span>Here now</div>
+        <div><span class="dot clone"></span>Away · their Clone stands in</div>
+      </div>
+    </aside>
+    <section class="room">
+      <div class="feed" id="feed"></div>
+      <div class="status" id="status"></div>
+      <form class="composer" id="composer">
+        <input id="input" autocomplete="off" placeholder="Message the room… use @name to ask a teammate (or their Clone)" />
+        <button type="submit">Send</button>
+      </form>
+    </section>
+    <aside class="side">
+      <h3>Team plan</h3>
+      <ol id="plan"></ol>
+      <h3>Clones learning</h3>
+      <div id="learning" class="learning"></div>
+    </aside>
+  </main>
+  <div class="toast" id="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>
