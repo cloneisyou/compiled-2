@@ -27,7 +27,7 @@
   "keyFade": 0.3,
   "keyLead": 0.25,
   "keyMargin": [44, 44],
-  "endCard": { "duration": 3.0, "title": "Clone Team Rooms", "whiteFade": 0.4, "logoFadeStart": 0.35, "logoFade": 0.8 },
+  "endCard": { "duration": 3.0, "title": "Clone Team Workspace", "whiteFade": 0.4, "logoFadeStart": 0.35, "logoFade": 0.8 },
   "voiceOffset": 0.3,
   "voiceLufs": -16,
   "bedLufs": -24,

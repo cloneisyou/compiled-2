@@ -1,4 +1,4 @@
-// Clone Team Rooms demo renderer.
+// Clone Team Workspace demo renderer.
 //
 //   node video/render.mjs [--work DIR] [--audio DIR] [--out FILE] [--config FILE.json] [--crf 16] [--preset slow]
 //
@@ -46,7 +46,7 @@ const C = {
   keyFade: cfg.keyFade ?? 0.3,
   keyLead: cfg.keyLead ?? 0.25, // cap pops in this long before the press
   keyMargin: cfg.keyMargin ?? [44, 44], // left, bottom (output px)
-  endCard: { duration: 3.0, title: 'Clone Team Rooms', whiteFade: 0.4, logoFadeStart: 0.35, logoFade: 0.8, ...(cfg.endCard ?? {}) },
+  endCard: { duration: 3.0, title: 'Clone Team Workspace', whiteFade: 0.4, logoFadeStart: 0.35, logoFade: 0.8, ...(cfg.endCard ?? {}) },
   voiceOffset: cfg.voiceOffset ?? 0.3,
   voiceLufs: cfg.voiceLufs ?? -16,
   bedLufs: cfg.bedLufs ?? -24, // bed level between lines

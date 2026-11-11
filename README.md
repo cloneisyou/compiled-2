@@ -1,4 +1,4 @@
-# Clone Team Rooms
+# Clone Team Workspace
 
 **Multiplayer AI for teams. Every teammate is always in the room, even when they're not.**
 
@@ -9,7 +9,7 @@ Built at **c0mpiled-18 · YC Startup School Hackathon, Taipei** (Nov 11, 2026) o
 
 AI today is single-player: everyone on a team has their own private chat, pastes context
 around, and still waits for meetings to decide anything. Clone already gives each person a
-**Clone**, a model of how they think and decide. Team Rooms makes it multiplayer:
+**Clone**, a model of how they think and decide. Team Workspace makes it multiplayer:
 
 | | |
 |---|---|

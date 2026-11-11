@@ -4,7 +4,7 @@ export function seedRoom() {
   const t = Date.now();
   return {
     name: 'Launch Room',
-    goal: 'Launch Clone Team Rooms at c0mpiled Taipei tonight and sign 3 design-partner teams this week',
+    goal: 'Launch Clone Team Workspace at c0mpiled Taipei tonight and sign 3 design-partner teams this week',
     members: [
       {
         id: 'min',

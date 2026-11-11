@@ -1,4 +1,4 @@
-# Clone Team Rooms — narration (en), source of truth
+# Clone Team Workspace — narration (en), source of truth
 
 Voice: same as the clone.is product demo (r188 line): ElevenLabs "Clone Sovereign · Cinematic Bass"
 (voice_id Cs2A0WJ8SGAgnpkXfsqm), model `eleven_v4`, stability 0.5, similarity_boost 0.75,
@@ -14,7 +14,7 @@ Pacing target ~2.5 words/s; each line starts 0.3–1.0 s after its scene starts;
 | S5 auto-approve | 40–54 | Every teammate's Clone predicts their vote. They all agree, so Clone Mode ships it. No meeting. | 16 | ~6.5 |
 | S5b fun fact | 54–60 | Fun fact: on DataClaw's 1,257 samples, Clone-0 predicts people with 93.9% accuracy. GPT-6 Astra gets 88.5%. | 17 (spoken ~28) | ~8.5 — see note |
 | S6 dissent+learn | 60–78 | A risky call only pings the person who would object. Jun makes an exception, and his Clone learns. | 18 | ~7.0 |
-| S7 logo | 78–86 | Clone Team Rooms. Multiplayer AI for your whole team. | 9 | ~3.5 |
+| S7 logo | 78–86 | Clone Team Workspace. Multiplayer AI for your whole team. | 9 | ~3.5 |
 
 Total runtime 86 s.
 
@@ -46,5 +46,5 @@ Fun fact: on DataClaw's 1,257 samples, Clone-0 predicts people with 93.9% accura
 
 A risky call only pings the person who would object. Jun makes an exception, and his Clone learns.
 
-Clone Team Rooms. Multiplayer AI for your whole team.
+Clone Team Workspace. Multiplayer AI for your whole team.
 ```

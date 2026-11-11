@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Clone Team Rooms — motion</title>
+<title>Clone Team Workspace — motion</title>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet" />
 <style>
   :root { --ink:#0c1322; --navy:#12306e; --blue:#1d8cf0; --muted:#8a8f98; --line:#e8eaee; --ok:#12a37f; --warn:#d98a00; }
@@ -147,7 +147,7 @@ headline('Your team <b>isn’t.</b>', 220, 96, 4.55, 8.1);
 {
   const logo = add(`<span class="chev" style="font-size:120px">»</span><span class="wm" style="font-size:150px;margin-left:26px">clone</span>`, { left: 0, right: 0, top: '170px', textAlign: 'center', whiteSpace: 'nowrap' });
   show(logo, 8.45, 12.4);
-  const p = add(`<span class="pill blue" style="font-size:16px;padding:8px 18px">Team Rooms</span>`, { left: 0, right: 0, top: '372px', textAlign: 'center' }); show(p, 9.1, 12.4, 'pop', .5);
+  const p = add(`<span class="pill blue" style="font-size:16px;padding:8px 18px">Team Workspace</span>`, { left: 0, right: 0, top: '372px', textAlign: 'center' }); show(p, 9.1, 12.4, 'pop', .5);
   const s = add('Multiplayer AI for your whole team', { top: '432px' }, 'sub'); show(s, 9.5, 12.4);
   const y = add('Built for YC’s Request for Startups · Fall 2026 · <b style="color:#0c1322">Multiplayer AI</b>', { top: '640px', fontSize: '16px' }, 'sub'); show(y, 10.0, 12.4, 'fade', .6);
   const m = mascot(596, 520, 7); show(m, 9.9, 12.4, 'pop', .5);
@@ -159,7 +159,7 @@ headline('Even when they’re <b>away.</b>', 70, 64, 17.9, 22.9);
 {
   const room = add(`<div style="display:flex;align-items:center;gap:12px"><span style="font-size:12px;color:#b3b8c0;letter-spacing:.08em">G-118</span><span style="flex:1"></span></div>
     <div style="font-size:26px;font-weight:700;letter-spacing:-.02em;margin-top:6px">Launch Room</div>
-    <div style="color:#5b6472;font-size:16px;margin-top:8px;line-height:1.5">Launch Clone Team Rooms at c0mpiled Taipei tonight<br/>and sign 3 design-partner teams this week.</div>
+    <div style="color:#5b6472;font-size:16px;margin-top:8px;line-height:1.5">Launch Clone Team Workspace at c0mpiled Taipei tonight<br/>and sign 3 design-partner teams this week.</div>
     <div style="margin-top:22px;border-top:1px solid var(--line);padding-top:18px;display:flex;gap:10px;color:#5b6472;font-size:15px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;border:2px solid var(--blue)"></span>In progress · one goal, one AI, the whole team</div>`,
     { left: '250px', top: '210px', width: '780px', padding: '30px 34px 28px' }, 'card');
   show(room, 13.2, 22.8);
@@ -271,7 +271,7 @@ headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
 {
   const m = mascot(578, 196, 9.5); show(m, 79.9, null, 'pop', .55);
   A(m, [{ translate: '0 0' }, { translate: '0 -18px' }, { translate: '0 0' }], 80.7, .7, { easing: 'ease-in-out' });
-  headline('Clone <b>Team Rooms</b>', 322, 76, 80.3, null);
+  headline('Clone <b>Team Workspace</b>', 322, 76, 80.3, null);
   const s = add('Humans and their Clones, deciding together.', { top: '424px' }, 'sub'); show(s, 81.0, null);
   const l = add(`<span class="pill" style="background:#eef1f5;color:#0c1322;font-size:16px;padding:10px 20px;font-weight:600">🔗 github.com/cloneisyou/compiled-2</span>`, { left: 0, right: 0, top: '488px', textAlign: 'center' }); show(l, 81.6, null, 'pop', .45);
   const c = add('Built tonight at c0mpiled Taipei · YC Request for Startups, Fall 2026: Multiplayer AI', { top: '560px', fontSize: '15px', color: '#9aa1ac' }, 'sub'); show(c, 82.2, null, 'fade', .6);

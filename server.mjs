@@ -1,4 +1,4 @@
-// Clone Team Rooms — multiplayer AI for teams.
+// Clone Team Workspace — multiplayer AI for teams.
 // Zero-dependency Node server: static files, Server-Sent Events for realtime,
 // and one shared Team AI that reasons over every teammate's Clone.
 import http from 'node:http';
@@ -118,7 +118,7 @@ function buildPrompt(speakerId, text) {
     .map((m) => `${m.kind === 'ai' ? 'Team AI' : m.kind === 'clone' ? `Clone ${member(m.author)?.name}` : member(m.author)?.name}: ${m.text}`)
     .join('\n');
   const open = room.proposals.filter((p) => p.status === 'waiting').map((p) => `- ${p.title}`).join('\n') || '(none)';
-  return `You are the shared Team AI inside a Clone Team Room: a multiplayer workspace where humans and each teammate's Clone (a model of how that person thinks and decides) work together in realtime.
+  return `You are the shared Team AI inside a Clone Team Workspace: a multiplayer workspace where humans and each teammate's Clone (a model of how that person thinks and decides) work together in realtime.
 
 Team goal: ${room.goal}
 Team plan so far:
@@ -330,6 +330,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Clone Team Rooms on http://127.0.0.1:${PORT}/?as=min`);
+  console.log(`Clone Team Workspace on http://127.0.0.1:${PORT}/?as=min`);
   console.log(`Model: ${process.env.LLM_BASE_URL ? process.env.LLM_BASE_URL : 'local Codex CLI (ChatGPT sign-in)'}`);
 });
