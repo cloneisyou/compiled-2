@@ -3,3 +3,7 @@ node_modules
 .DS_Store
 video/work
 .claude/
+video/audio/*.wav
+video/audio/raw/
+video/audio/voice/*.wav
+video/dbg.mjs

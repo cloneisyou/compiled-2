@@ -13,7 +13,7 @@ around, and still waits for meetings to decide anything. Clone already gives eac
 |---|---|
 | **One shared Team AI** | Humans talk to the same AI in a realtime room. It knows who is speaking, who is here, and the team goal and plan. |
 | **Clones stand in** | When a teammate is away, their Clone answers in their voice, with a confidence score. `@Sara` works even when Sara is asleep. |
-| **Team Clone Mode** | Every proposal is scored by each teammate's Clone: *how likely is my human to accept this?* If every Clone is above the bar (80%), it ships immediately and lands in the team plan. No meeting. |
+| **Team Clone Mode** | Every proposal is scored by each teammate's Clone: *how likely is my human to accept this?* If every Clone is above the bar (75%), it ships immediately and lands in the team plan. No meeting. |
 | **Ask only the dissenters** | If a Clone predicts its human would object, only that human is pinged, with Approve / Reject right in the room. |
 | **Humans keep the final say** | Anyone can Revert. When a human overrides their Clone, the Clone **learns** the correction and uses it on the next prediction. |
 
@@ -50,4 +50,6 @@ Without those variables it uses the local Codex CLI signed in with ChatGPT.
 
 ## Demo video
 
-`video/clone-team-rooms-demo.mp4` (71 s, recorded against the live server with real model calls; only model wait time is cut).
+`video/clone-team-rooms-demo.mp4` (86 s, 2560x1440). It is a motion graphic rendered frame by frame from
+`public/motion.html` (`node video/capture-mg.mjs`). The Clone replies, vote predictions and the predicted
+prompt shown in it are real model output from takes of the live app (`node video/record.mjs`).

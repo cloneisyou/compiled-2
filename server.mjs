@@ -12,7 +12,7 @@ import { seedRoom } from './seed.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4317);
-const AUTO_APPROVE = Number(process.env.AUTO_APPROVE || 0.8);
+const AUTO_APPROVE = Number(process.env.AUTO_APPROVE || 0.75);
 const STATE_FILE = path.join(ROOT, '.room-state.json');
 
 let room = loadState();
@@ -139,12 +139,14 @@ Respond as JSON only, no prose outside JSON, with this shape:
   "reply": "Team AI reply to ${speaker.name}. 1-2 short sentences. Be concrete. If you propose an action, say it.",
   "clone_replies": [ { "member_id": "id of an OFFLINE teammate", "text": "what that teammate would say, first person, in their voice, 1 sentence", "confidence": 0.0-1.0 } ],
   "proposal": null or { "title": "short imperative action the team would commit to (max 9 words)", "plan_item": "one line to add to the team plan if approved" },
-  "predictions": [ { "member_id": "id", "accept": 0.0-1.0, "reason": "max 12 words, in that teammate's perspective" } ]
+  "predictions": [ { "member_id": "id", "accept": 0.0-1.0, "reason": "max 12 words, in that teammate's perspective" } ],
+  "predicted_next": "the single next message ${speaker.name} would most likely send to move the goal forward, in ${speaker.name}'s own voice, one line, max 18 words"
 }
 Rules:
 - clone_replies: include an offline teammate only if they were mentioned (e.g. @name) or their expertise is clearly needed. Usually 0-1 entries.
-- proposal: include one only when ${speaker.name} proposes an action ("let's...", "we should..."). A question to a teammate is NOT a proposal: return null and let their Clone answer. It must be exactly what ${speaker.name} asked for, stated faithfully; never swap in your own counter-plan. If you have concerns, say them in "reply" and let the predictions surface who disagrees. Otherwise null.
+- proposal: include one only when ${speaker.name} proposes an action ("let's...", "we should..."). A question to a teammate is NOT a proposal: return null and let their Clone answer. It must be exactly what ${speaker.name} asked for, stated faithfully; never swap in your own counter-plan. Example: if they say \"let's ship without the test\", the title is \"Ship tonight without the end-to-end test\", NOT \"Run the test first\"; predictions are about THAT title. If you have concerns, say them in "reply" and let the predictions surface who disagrees. Otherwise null.
 - reply: never claim the team agreed; the room tallies the votes. Mention which teammates' Clones you expect to object, if any.
+- predicted_next: always include it. It must be a concrete proposal that starts with "Let's" and that the whole team would plausibly accept, given how each teammate thinks.
 - predictions: if there is a proposal, predict for EVERY teammate except ${speaker.name} how likely they accept it, grounded in how they think and corrections they taught their Clone. Be decisive: use values near 0.9+ or below 0.5 when their preferences clearly apply.`;
 }
 
@@ -155,11 +157,20 @@ async function runTeamAi(speakerId, text) {
   try {
     const result = parseJson(await llm(buildPrompt(speakerId, text)));
     for (const c of result.clone_replies || []) {
-      if (!member(c.member_id) || c.member_id === speakerId) continue;
+      if (!member(c.member_id) || c.member_id === speakerId || onlineIds().includes(c.member_id)) continue; // Clones only speak for people who are away
       pushMessage({ kind: 'clone', author: c.member_id, text: c.text, confidence: clamp(c.confidence) });
     }
     const ai = pushMessage({ kind: 'ai', author: 'ai', text: result.reply || '…' });
+    // Structure is decided by what the human wrote, not by the model: a question is
+    // never a proposal, and "let's …" always is (stated as the human asked it).
+    const asksToAct = /\blet['\u2019]s\b|\bwe should\b/i.test(text);
+    if (!asksToAct) result.proposal = null;
+    else if (!result.proposal || !result.proposal.title) result.proposal = { title: text.replace(/^.*?\blet['\u2019]s\s+/i, '').replace(/[.!]+$/, '').replace(/^./, (c) => c.toUpperCase()).slice(0, 70), plan_item: text };
     if (result.proposal && result.proposal.title) createProposal(speakerId, result.proposal, result.predictions || [], ai.id);
+    if (result.predicted_next) {
+      room.suggestions = room.suggestions || {};
+      room.suggestions[speakerId] = String(result.predicted_next).slice(0, 200);
+    }
   } catch (e) {
     console.error('[team-ai]', e.message);
     pushMessage({ kind: 'ai', author: 'ai', text: `I couldn't reach the model (${e.message.slice(0, 80)}). Try again.`, error: true });
@@ -277,6 +288,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === '/api/message') {
       if (!member(body.as) || !body.text?.trim()) return json(res, 400, { error: 'bad message' });
       pushMessage({ kind: 'human', author: body.as, text: body.text.trim() });
+      if (room.suggestions) delete room.suggestions[body.as];
       sync();
       runTeamAi(body.as, body.text.trim());
       return json(res, 200, { ok: true });
@@ -285,6 +297,16 @@ const server = http.createServer(async (req, res) => {
       const prop = room.proposals.find((p) => p.id === body.proposalId);
       if (!prop || !member(body.as)) return json(res, 400, { error: 'bad vote' });
       vote(prop, body.as, !!body.accept);
+      sync();
+      return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/api/cursor') {
+      broadcast('cursor', { as: body.as, x: body.x, y: body.y, hide: !!body.hide });
+      return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/api/suggest') {
+      room.suggestions = room.suggestions || {};
+      if (member(body.as) && body.text) room.suggestions[body.as] = String(body.text).slice(0, 200);
       sync();
       return json(res, 200, { ok: true });
     }

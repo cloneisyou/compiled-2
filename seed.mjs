@@ -42,6 +42,7 @@ export function seedRoom() {
           'Pushes for onboarding that shows value in under 30 seconds.',
           'Loves inviting real users into early demos.',
           'Would rather demo something real tonight than polish it for another week.',
+          'Defers to Min and Jun on engineering and shipping calls; almost never blocks a ship decision.',
         ],
         learned: [],
       },

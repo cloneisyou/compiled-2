@@ -5,39 +5,58 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Clone Team Rooms</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <header class="top">
-    <div class="brand"><span class="logo">C</span><span>Clone</span><span class="sep">/</span><span class="ws">Team workspace</span><span class="sep">/</span><span id="roomName">Team Room</span></div>
-    <div class="goal" id="goal"></div>
-    <div class="me" id="me"></div>
-  </header>
-  <main class="layout">
-    <aside class="team">
-      <h3>Team</h3>
-      <div id="members"></div>
-      <div class="legend">
-        <div><span class="dot on"></span>Here now</div>
-        <div><span class="dot clone"></span>Away · their Clone stands in</div>
+  <div class="app" id="app">
+    <aside class="sidebar">
+      <div class="sb-top"><span class="ico">▢</span><span class="ico">←</span><span class="ico dim">→</span></div>
+      <div class="wordmark"><span>clone</span><span class="ico">⌕</span></div>
+      <nav class="nav">
+        <a><i>✎</i>New</a><a><i>⇩</i>Inbox</a><a class="active" id="navGoals"><i>◎</i>Goals</a><a><i>⬡</i>Skills</a><a><i>⟳</i>Auto</a>
+      </nav>
+      <div class="sb-section" id="teamSection">
+        <div class="sb-label" id="sbLabel">Projects</div>
+        <div id="sbList"></div>
       </div>
+      <div class="menu" id="wsMenu" hidden>
+        <div class="menu-email">min@clone.team</div>
+        <div class="menu-label">Workspaces</div>
+        <button class="menu-item" data-ws="personal"><span class="ws-badge">P</span>Personal<span class="check" id="chkPersonal">✓</span></button>
+        <button class="menu-item" data-ws="team" id="wsTeam"><span class="ws-badge blue">»</span>Clone<span class="check" id="chkTeam"></span></button>
+      </div>
+      <button class="account" id="account"><span class="av sm" style="--c:#2f6bff">M</span>Min <span class="dim">· Clonist</span></button>
     </aside>
-    <section class="room">
-      <div class="feed" id="feed"></div>
-      <div class="status" id="status"></div>
-      <form class="composer" id="composer">
-        <input id="input" autocomplete="off" placeholder="Message the room… use @name to ask a teammate (or their Clone)" />
-        <button type="submit">Send</button>
-      </form>
-    </section>
-    <aside class="side">
-      <h3>Team plan</h3>
-      <ol id="plan"></ol>
-      <h3>Clones learning</h3>
-      <div id="learning" class="learning"></div>
-    </aside>
-  </main>
+
+    <main class="main" id="main">
+      <section class="chat">
+        <div class="feed" id="feed"></div>
+        <div class="status" id="status"></div>
+        <form class="composer" id="composer">
+          <div class="chips">
+            <span class="chip goalchip"><b>◉◉</b><span id="goalChip">New goal</span></span>
+            <span class="spacer"></span>
+            <span class="chip">📦 Product ⌄</span><span class="chip">💻 Local ⌄</span><span class="chip">Worktree <span class="box"></span></span>
+          </div>
+          <div class="inputwrap">
+            <div class="ghost" id="ghost"></div>
+            <textarea id="input" rows="2" autocomplete="off" placeholder="Do anything"></textarea>
+          </div>
+          <div class="cfoot">
+            <span class="plus">+</span>
+            <span class="author" id="author">Clone Min ⌄</span><span class="toggle" id="toggle"><i></i></span>
+            <span class="spacer"></span>
+            <span class="model"><b>»</b> GPT-6 Astra ⌄</span><span class="effort">Extra High ⌄</span><span class="mic">🎙</span>
+            <button type="submit" class="send" aria-label="Send">↑</button>
+          </div>
+        </form>
+      </section>
+      <section class="doc" id="doc"></section>
+    </main>
+    <div class="presence" id="presence"></div>
+    <div id="cursors"></div>
+  </div>
   <div class="toast" id="toast"></div>
   <script src="/app.js"></script>
 </body>
