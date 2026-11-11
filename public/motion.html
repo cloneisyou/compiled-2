@@ -236,7 +236,7 @@ headline('It’s not just <b>guessing.</b>', 290, 88, 58.85, 61.1, 'navy');
 {
   const ff = add('<span class="pill blue">Fun fact</span>', { left: 0, right: 0, top: '150px', textAlign: 'center' }); show(ff, 61.4, 66.8, 'pop', .4);
   const n = add('<span id="n8">0.0</span><b>%</b>', { left: 0, right: 0, top: '205px', textAlign: 'center' }, 'abs big'); show(n, 61.5, 66.8);
-  hooks.push((t) => { const k = Math.max(0, Math.min(1, (t - 61.6) / 1.5)); n.querySelector('#n8').textContent = (93.9 * (1 - Math.pow(1 - k, 3))).toFixed(1); });
+  hooks.push((t) => { const k = Math.max(0, Math.min(1, (t - 61.6) / 1.0)); n.querySelector('#n8').textContent = (90 + 3.9 * (1 - Math.pow(1 - k, 3))).toFixed(1); });
   const s1 = add('Clone-0 predicts what a person will do next', { top: '428px', fontSize: '26px', color: '#0c1322', fontWeight: 600 }, 'sub'); show(s1, 62.4, 66.8);
   const s2 = add('Human Model Benchmark · DataClaw · 1,257 samples &nbsp;·&nbsp; GPT-6 Astra 88.5% &nbsp;·&nbsp; Claude Opus 5.5 63.2%', { top: '478px', fontSize: '17px' }, 'sub'); show(s2, 63.0, 66.8);
 }
