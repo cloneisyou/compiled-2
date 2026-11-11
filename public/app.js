@@ -4,6 +4,8 @@ const SHOW_POINTER = params.get('pointer') === '1';
 let room = null;
 let thinking = 0;
 let team = params.get('ws') === 'team';
+let cloneOf = ME; // whose Clone predicts the next prompt
+let predictingClone = null;
 const typing = new Map();
 const seenPlan = new Set();
 const seenLessons = new Set();
@@ -24,7 +26,8 @@ function render() {
   $('app').classList.toggle('team', team);
   $('app').classList.toggle('noside', params.get('side') === '0');
   $('account').innerHTML = `${av(me, { cls: 'sm' })}${esc(me.name)} <span class="dim">· Clonist</span>`;
-  $('author').textContent = `Clone ${me.name} ⌄`;
+  $('author').textContent = `Clone ${member(cloneOf).name} ⌄`;
+  $('cloneMenu').innerHTML = `<div class="menu-label">Predict the next prompt as</div>` + room.members.map((m) => `<button type="button" class="menu-item" data-clone="${m.id}">${av(m, { clone: true, cls: 'sm' })}Clone ${esc(m.name)}<span class="check">${m.id === cloneOf ? '✓' : ''}</span></button>`).join('');
   $('chkPersonal').textContent = team ? '' : '✓';
   $('chkTeam').textContent = team ? '✓' : '';
   $('sbLabel').textContent = team ? 'Team · Clone' : 'Projects';
@@ -104,10 +107,11 @@ function renderMessage(msg) {
 function renderMessageInner(msg) {
   const text = esc(msg.text).replace(/@(\w+)/g, '<span class="mention">@$1</span>');
   const props = room.proposals.filter((p) => p.messageId === msg.id).map(renderProposal).join('');
-  if (msg.kind === 'human' && msg.author === ME) return `<div class="msg mine"><div class="bubble">${text}</div></div>`;
+  const via = msg.viaClone && member(msg.viaClone) ? `<div class="via">${av(member(msg.viaClone), { clone: true, cls: 'sm' })}Written by Clone ${esc(member(msg.viaClone).name)}</div>` : '';
+  if (msg.kind === 'human' && msg.author === ME) return `<div class="msg mine"><div class="minecol">${via}<div class="bubble">${text}</div></div></div>`;
   if (msg.kind === 'human') {
     const m = member(msg.author);
-    return `<div class="msg other"><div class="who">${av(m, { cls: 'sm' })}${esc(m.name)}</div><div class="bubble">${text}</div></div>`;
+    return `<div class="msg other"><div class="who">${av(m, { cls: 'sm' })}${esc(m.name)}${msg.viaClone && member(msg.viaClone) ? `<span class="note">· written by Clone ${esc(member(msg.viaClone).name)}</span>` : ''}</div><div class="bubble">${text}</div></div>`;
   }
   if (msg.kind === 'clone') {
     const m = member(msg.author);
@@ -141,10 +145,10 @@ function renderProposal(p) {
   return `<div class="proposal ${p.status}"><div class="ph"><span class="pt">${esc(p.title)}</span>${status}</div>${rows}${actions ? `<div class="actions">${actions}</div>` : ''}</div>`;
 }
 
-const suggestion = () => (team && room?.suggestions?.[ME]) || '';
+const suggestion = () => (team && room?.suggestions?.[cloneOf]) || '';
 function renderGhost() {
   const s = suggestion();
-  const show = s && !$('input').value && thinking === 0;
+  const show = s && !$('input').value && thinking === 0 && !predictingClone;
   $('ghost').innerHTML = show ? `${esc(s)}<span class="tabhint">tab</span>` : '';
   $('composer').classList.toggle('hasghost', !!show);
 }
@@ -152,9 +156,10 @@ function renderGhost() {
 function renderStatus() {
   const bits = [];
   for (const [id] of typing) if (id !== ME && member(id)) bits.push(`${esc(member(id).name)} is typing…`);
+  if (predictingClone && member(predictingClone)) bits.push(`<span class="writing">● Clone ${esc(member(predictingClone).name)} is writing a prompt…</span>`);
   if (thinking > 0) bits.push(`<span class="shimmer">Team AI is consulting ${room.members.length} Clones…</span>`);
   $('status').innerHTML = bits.join(' · ');
-  $('composer').classList.toggle('mode', thinking > 0 && cloneMode);
+  $('composer').classList.toggle('mode', (thinking > 0 && cloneMode) || !!predictingClone);
   $('toggle').classList.toggle('on', cloneMode);
 }
 
@@ -174,7 +179,7 @@ function send(viaClone = false) {
   if (!text || !team) return;
   cloneMode = viaClone;
   $('input').value = '';
-  post('/api/message', { text });
+  post('/api/message', viaClone ? { text, clone: cloneOf } : { text });
   post('/api/typing', { typing: false });
   renderGhost();
 }
@@ -208,6 +213,16 @@ $('input').addEventListener('keydown', (e) => {
 document.addEventListener('click', (e) => {
   const b = e.target.closest('button[data-vote]');
   if (b) return post('/api/vote', { proposalId: b.dataset.p, accept: b.dataset.vote === '1' });
+  const cl = e.target.closest('button[data-clone]');
+  if (cl) {
+    cloneOf = cl.dataset.clone;
+    $('cloneMenu').hidden = true;
+    render();
+    if (!suggestion()) post('/api/predict', { clone: cloneOf });
+    return;
+  }
+  if (e.target.closest('#author')) { $('cloneMenu').hidden = !$('cloneMenu').hidden; return; }
+  $('cloneMenu').hidden = true;
   const ws = e.target.closest('button[data-ws]');
   if (ws) {
     team = ws.dataset.ws === 'team';
@@ -254,6 +269,13 @@ es.addEventListener('room', (e) => {
 es.addEventListener('thinking', (e) => {
   thinking = JSON.parse(e.data).busy;
   if (thinking === 0) cloneMode = false;
+  if (room) {
+    renderStatus();
+    renderGhost();
+  }
+});
+es.addEventListener('predicting', (e) => {
+  predictingClone = JSON.parse(e.data).clone;
   if (room) {
     renderStatus();
     renderGhost();

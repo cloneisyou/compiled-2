@@ -32,9 +32,30 @@ async function say(text) {
   await input.pressSequentially(text, { delay: 28 }); await sleep(300); await input.press('Enter');
   for (;;) { const r = await room(); if (r.messages.filter((x) => x.kind === 'ai').length > before && r.busy === 0) break; await sleep(150); }
 }
+await sleep(1200);
+// 1) Min picks whose Clone predicts the next prompt: Clone Jun
+let c0 = await center(min.locator('#author'));
+await moveTo(c0.x, c0.y, 900); await page.mouse.click(c0.x, c0.y); await sleep(700);
+c0 = await center(min.locator('#cloneMenu button[data-clone="jun"]'));
+await moveTo(c0.x - 30, c0.y, 600); await sleep(300); await page.mouse.click(c0.x - 30, c0.y); mark('pick');
+for (;;) { const r = await room(); if (r.suggestions?.jun && !r.predicting) break; await sleep(150); }
+await min.locator('#ghost .tabhint').waitFor(); mark('ghost');
+await min.locator('#input').focus();
 await sleep(1500);
-await say('@Sara should tonight’s demo open with a purple gradient hero?');
-mark('answer'); await sleep(6500);
+let before = (await room()).messages.filter((x) => x.kind === 'ai').length;
+await min.locator('#input').press('Tab'); mark('tab1'); await sleep(700);
+await min.locator('#input').press('Tab'); mark('tab2');
+for (;;) { const r = await room(); if (r.messages.filter((x) => x.kind === 'ai').length > before && r.busy === 0) break; await sleep(150); }
+mark('sent_done'); await sleep(4500);
+// 2) Jun steers the same session from his own window
+const ji = jun.locator('#input'); c0 = await center(ji);
+await moveTo(c0.x - 150, c0.y, 1100); await page.mouse.click(c0.x - 150, c0.y);
+before = (await room()).messages.filter((x) => x.kind === 'ai').length;
+mark('steer_type');
+await ji.pressSequentially('Keep it to one flow: join, ask, approve. Ten minutes max.', { delay: 30 }); await sleep(300); await ji.press('Enter'); mark('steer_sent');
+for (;;) { const r = await room(); if (r.messages.filter((x) => x.kind === 'ai').length > before && r.busy === 0) break; await sleep(150); }
+mark('steer_done'); await sleep(4000);
+// 3) Risky call: only Jun is asked
 await say('Let’s ship tonight without the end-to-end test.');
 mark('proposal'); await sleep(2500);
 const approve = jun.locator('.proposal.waiting button[data-vote="1"]').last();
@@ -47,4 +68,4 @@ const r = await room();
 const video = page.video(); await ctx.close(); await browser.close();
 fs.renameSync(await video.path(), path.join(WORK, 'real.webm'));
 fs.writeFileSync(path.join(WORK, 'real-markers.json'), JSON.stringify(marks));
-console.log(JSON.stringify({ marks, proposals: r.proposals.map((p) => [p.title, p.status, Object.fromEntries(Object.entries(p.votes).map(([k, v]) => [k, v.accept]))]), learned: r.members.map((x) => x.learned.length) }));
+console.log(JSON.stringify({ marks, msgs: r.messages.slice(1).map((x) => [x.kind, x.author, x.viaClone || '', x.text]), proposals: r.proposals.map((p) => [p.title, p.status, Object.fromEntries(Object.entries(p.votes).map(([k, v]) => [k, [v.accept, v.source, v.reason]]))]), learned: r.members.map((x) => x.learned.length) }));

@@ -13,8 +13,8 @@ around, and still waits for meetings to decide anything. Clone already gives eac
 
 | | |
 |---|---|
-| **One shared Team AI** | Humans talk to the same AI in a realtime room. It knows who is speaking, who is here, and the team goal and plan. |
-| **Clones stand in** | When a teammate is away, their Clone answers in their voice, with a confidence score. `@Sara` works even when Sara is asleep. |
+| **One shared session** | Teammates join the same live AI session: presence, live cursors, one thread, one team plan. Anyone can see the work, steer it, or take it over. |
+| **Pick whose Clone writes the next prompt** | The composer predicts the next prompt. In a team you choose whose Clone predicts it: Clone Min, Clone Jun or Clone Sara each write it the way that person would. Tab accepts, Tab again sends. |
 | **Team Clone Mode** | Every proposal is scored by each teammate's Clone: *how likely is my human to accept this?* If every Clone is above the bar (75%), it ships immediately and lands in the team plan. No meeting. |
 | **Ask only the dissenters** | If a Clone predicts its human would object, only that human is pinged, with Approve / Reject right in the room. |
 | **Humans keep the final say** | Anyone can Revert. When a human overrides their Clone, the Clone **learns** the correction and uses it on the next prediction. |
@@ -28,7 +28,7 @@ team: the AI predicts the *team's* acceptance, not just yours.
 node server.mjs            # Node 20+, zero dependencies
 open "http://127.0.0.1:4317/?as=min"   # Min (CEO)
 open "http://127.0.0.1:4317/?as=jun"   # Jun (Engineer) in a second window
-# Sara stays away, so Clone Sara stands in for her.
+# Sara stays away; her Clone can still write prompts and vote for her.
 ```
 
 Model: any OpenAI-compatible endpoint, e.g. GMI Cloud inference:
@@ -41,19 +41,19 @@ Without those variables it uses the local Codex CLI signed in with ChatGPT.
 
 ## How it works
 
-- `server.mjs`: zero-dependency Node server. Realtime presence and room state over
-  Server-Sent Events. One model call per message returns the Team AI reply, stand-in replies
-  from away teammates' Clones, a proposal, and a per-teammate acceptance prediction.
-  `settle()` implements Team Clone Mode; `vote()` records human overrides as Clone lessons.
+- `server.mjs`: zero-dependency Node server. Realtime presence, cursors and room state over
+  Server-Sent Events. One model call per message returns the Team AI reply, a proposal, a
+  per-teammate acceptance prediction, and the next prompt each teammate's Clone would write.
+  `runPredict()` writes those prompts on demand, `settle()` implements Team Clone Mode, and
+  `vote()` records human overrides as Clone lessons.
 - `seed.mjs`: the demo team and each Clone's memory of how its human thinks.
-- `public/`: the room UI (vanilla JS). `stage.html` puts two teammates side by side for the demo.
-- `video/record.mjs` + `video/cut.mjs`: records the demo against the live server with real
-  model calls (Playwright), then cuts only the model wait time.
+- `public/`: the room UI (vanilla JS). `stage.html` puts two teammates side by side.
+- `video/`: `record-real.mjs` records the running app with two teammates (real model calls);
+  `public/motion.html` + `capture-mg.mjs` render the demo frame by frame.
 
 ## Demo video
 
-`video/clone-team-rooms-demo.mp4` (86 s, 2560x1440). It is a motion graphic rendered frame by frame from
-`public/motion.html` (`node video/capture-mg.mjs`). The Clone replies, vote predictions and the predicted
-prompt shown in it are real model output from takes of the live app (`node video/record.mjs`).
-Two segments (0:31 and 1:15, labelled "Real app · live") are screen recordings of the running app with
-two teammates side by side (`public/stage.html`, `node video/record-real.mjs`).
+`video/clone-team-rooms-demo.mp4` (86 s, 2560x1440). A motion graphic rendered from `public/motion.html`.
+The predicted prompt, votes and reasons shown in it are real model output from a take of the live app,
+and three segments labelled "Real app · live" (0:31, 1:01, 1:15) are screen recordings of the running
+app with two teammates side by side.

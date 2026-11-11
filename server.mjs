@@ -137,17 +137,52 @@ New message from ${speaker.name}: ${text}
 Respond as JSON only, no prose outside JSON, with this shape:
 {
   "reply": "Team AI reply to ${speaker.name}. 1-2 short sentences. Be concrete. If you propose an action, say it.",
-  "clone_replies": [ { "member_id": "id of an OFFLINE teammate", "text": "what that teammate would say, first person, in their voice, 1 sentence", "confidence": 0.0-1.0 } ],
   "proposal": null or { "title": "short imperative action the team would commit to (max 9 words)", "plan_item": "one line to add to the team plan if approved" },
   "predictions": [ { "member_id": "id", "accept": 0.0-1.0, "reason": "max 12 words, in that teammate's perspective" } ],
-  "predicted_next": "the single next message ${speaker.name} would most likely send to move the goal forward, in ${speaker.name}'s own voice, one line, max 18 words"
+  "predicted_next": { "<member id>": "the next prompt THAT teammate would send to the Team AI to move the goal forward, in their own voice and priorities, one line, max 16 words, starts with Let's" }
 }
 Rules:
-- clone_replies: include an offline teammate only if they were mentioned (e.g. @name) or their expertise is clearly needed. Usually 0-1 entries.
-- proposal: include one only when ${speaker.name} proposes an action ("let's...", "we should..."). A question to a teammate is NOT a proposal: return null and let their Clone answer. It must be exactly what ${speaker.name} asked for, stated faithfully; never swap in your own counter-plan. Example: if they say \"let's ship without the test\", the title is \"Ship tonight without the end-to-end test\", NOT \"Run the test first\"; predictions are about THAT title. If you have concerns, say them in "reply" and let the predictions surface who disagrees. Otherwise null.
+- proposal: include one only when ${speaker.name} proposes an action ("let's...", "we should..."). A question is NOT a proposal: return null. It must be exactly what ${speaker.name} asked for, stated faithfully; never swap in your own counter-plan. Example: if they say \"let's ship without the test\", the title is \"Ship tonight without the end-to-end test\", NOT \"Run the test first\"; predictions are about THAT title. If you have concerns, say them in "reply" and let the predictions surface who disagrees. Otherwise null.
 - reply: never claim the team agreed; the room tallies the votes. Mention which teammates' Clones you expect to object, if any.
-- predicted_next: always include it. It must be a concrete proposal that starts with "Let's" and that the whole team would plausibly accept, given how each teammate thinks.
+- predicted_next: always include one entry for EVERY teammate id (including ${speaker.name}). Each must differ and reflect how that person thinks; each must be a concrete proposal the rest of the team would plausibly accept.
 - predictions: if there is a proposal, predict for EVERY teammate except ${speaker.name} how likely they accept it, grounded in how they think and corrections they taught their Clone. Be decisive: use values near 0.9+ or below 0.5 when their preferences clearly apply.`;
+}
+
+function setSuggestions(map) {
+  if (!map || typeof map !== 'object') return;
+  room.suggestions = room.suggestions || {};
+  for (const m of room.members) if (typeof map[m.id] === 'string' && map[m.id].trim()) room.suggestions[m.id] = map[m.id].trim().slice(0, 200);
+}
+// Prompt prediction: any teammate's Clone can write the next prompt for the shared session.
+let predicting = null;
+async function runPredict(cloneId) {
+  if (predicting) return;
+  predicting = cloneId;
+  broadcast('predicting', { clone: cloneId });
+  try {
+    const history = room.messages.slice(-14).map((m) => `${m.kind === 'ai' ? 'Team AI' : member(m.author)?.name}: ${m.text}`).join('\n');
+    const out = parseJson(await llm(`You predict the next prompt each teammate would send to the shared Team AI in a multiplayer workspace.
+
+Team goal: ${room.goal}
+Team plan so far:
+${room.plan.map((p) => `- ${p.text}`).join('\n')}
+
+Teammates (each has a Clone, a model of how they think):
+${teamBrief(null)}
+
+Conversation so far:
+${history}
+
+Respond as JSON only: { "predicted_next": { "<member id>": "the next prompt THAT teammate would send to move the goal forward, in their own voice and priorities, one line, max 16 words, starts with Let's" } }
+Include every teammate id. Each must differ and reflect how that person thinks, and be a concrete proposal the rest of the team would plausibly accept.`));
+    setSuggestions(out.predicted_next);
+  } catch (e) {
+    console.error('[predict]', e.message);
+  } finally {
+    predicting = null;
+    broadcast('predicting', { clone: null });
+    sync();
+  }
 }
 
 let busy = 0;
@@ -156,10 +191,6 @@ async function runTeamAi(speakerId, text) {
   broadcast('thinking', { busy, speakerId });
   try {
     const result = parseJson(await llm(buildPrompt(speakerId, text)));
-    for (const c of result.clone_replies || []) {
-      if (!member(c.member_id) || c.member_id === speakerId || onlineIds().includes(c.member_id)) continue; // Clones only speak for people who are away
-      pushMessage({ kind: 'clone', author: c.member_id, text: c.text, confidence: clamp(c.confidence) });
-    }
     const ai = pushMessage({ kind: 'ai', author: 'ai', text: result.reply || '…' });
     // Structure is decided by what the human wrote, not by the model: a question is
     // never a proposal, and "let's …" always is (stated as the human asked it).
@@ -167,10 +198,7 @@ async function runTeamAi(speakerId, text) {
     if (!asksToAct) result.proposal = null;
     else if (!result.proposal || !result.proposal.title) result.proposal = { title: text.replace(/^.*?\blet['\u2019]s\s+/i, '').replace(/[.!]+$/, '').replace(/^./, (c) => c.toUpperCase()).slice(0, 70), plan_item: text };
     if (result.proposal && result.proposal.title) createProposal(speakerId, result.proposal, result.predictions || [], ai.id);
-    if (result.predicted_next) {
-      room.suggestions = room.suggestions || {};
-      room.suggestions[speakerId] = String(result.predicted_next).slice(0, 200);
-    }
+    setSuggestions(result.predicted_next);
   } catch (e) {
     console.error('[team-ai]', e.message);
     pushMessage({ kind: 'ai', author: 'ai', text: `I couldn't reach the model (${e.message.slice(0, 80)}). Try again.`, error: true });
@@ -282,13 +310,14 @@ const server = http.createServer(async (req, res) => {
     });
     return;
   }
-  if (url.pathname === '/api/room') return json(res, 200, { ...snapshot(), busy });
+  if (url.pathname === '/api/room') return json(res, 200, { ...snapshot(), busy, predicting });
   if (req.method === 'POST') {
     const body = await readBody(req);
     if (url.pathname === '/api/message') {
       if (!member(body.as) || !body.text?.trim()) return json(res, 400, { error: 'bad message' });
-      pushMessage({ kind: 'human', author: body.as, text: body.text.trim() });
-      if (room.suggestions) delete room.suggestions[body.as];
+      const via = member(body.clone)?.id;
+      pushMessage({ kind: 'human', author: body.as, text: body.text.trim(), ...(via ? { viaClone: via } : {}) });
+      room.suggestions = {};
       sync();
       runTeamAi(body.as, body.text.trim());
       return json(res, 200, { ok: true });
@@ -304,10 +333,9 @@ const server = http.createServer(async (req, res) => {
       broadcast('cursor', { as: body.as, x: body.x, y: body.y, hide: !!body.hide });
       return json(res, 200, { ok: true });
     }
-    if (url.pathname === '/api/suggest') {
-      room.suggestions = room.suggestions || {};
-      if (member(body.as) && body.text) room.suggestions[body.as] = String(body.text).slice(0, 200);
-      sync();
+    if (url.pathname === '/api/predict') {
+      if (!member(body.as) || !member(body.clone)) return json(res, 400, { error: 'bad predict' });
+      if (!room.suggestions?.[body.clone]) runPredict(body.clone);
       return json(res, 200, { ok: true });
     }
     if (url.pathname === '/api/typing') {

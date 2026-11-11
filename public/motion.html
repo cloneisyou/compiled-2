@@ -183,39 +183,50 @@ headline('Even when they’re <b>away.</b>', 70, 64, 17.9, 22.9);
   cursor('Min', C.M, [[14.3, 420, 520], [16, 560, 372], [18, 470, 430], [20.2, 640, 300], [22.6, 600, 330]], 14.3, 22.7);
   cursor('Jun', C.J, [[15.2, 1100, 560], [16.6, 850, 400], [18.4, 930, 330], [20.6, 780, 420], [22.6, 820, 390]], 15.2, 22.7);
 }
-// ───────── S5  23.2–35.6  Ask anyone. Their Clone answers.
-headline('Ask anyone. <b>Their Clone</b> answers.', 62, 60, 23.25, 35.4);
-{
-  const Q = '@Sara should tonight’s demo open with a purple gradient hero?';
-  const c = composer(280, 300, 720, '<span id="t5"></span><span class="caret"></span>'); c.classList.add('glow'); c.style.scale = '1.2'; c.style.transformOrigin = '50% 0';
-  show(c, 23.8, null); typer(c.querySelector('#t5'), Q, 24.5, 22, mention);
-  A(c, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(40px) scale(.96)', filter: 'blur(8px)' }], 28.0, .45, { fill: 'forwards', easing: 'ease-in' });
-  const b = add(mention(Q), { right: '200px', top: '186px' }, 'bubble'); show(b, 28.15, 31.2);
-  const r = add(`<div class="who">${av('S', C.S, 's clone')}Clone Sara<span class="note">on behalf of Sara · 96% sure</span></div>
-    <div style="font-size:19px;line-height:1.5;margin-top:12px;border-left:2px dashed #d5d9df;padding-left:16px;margin-left:12px">I’d open with the product itself and show value<br/>in under 30 seconds; skip the purple gradient.</div>`,
-    { left: '250px', top: '290px', width: '640px', padding: '22px 26px', scale: '1.18', transformOrigin: '0 0' }, 'card');
-  show(r, 29.4, 31.2);
-  realClip('a', 120, 31.45, 35.3);
-  const th = add(`<span style="color:#8a8f98;font-size:15px">Team AI is consulting 3 Clones…</span>`, { left: '262px', top: '262px' }); show(th, 28.5, 29.3, 'fade', .3);
-  const w = add('Sara is away. Her Clone answers the way she would.', { top: '548px' }, 'sub'); show(w, 30.6, 31.2);
+// ───────── S5  23.2–35.6  Pick whose Clone writes the next prompt
+headline('Pick <b>whose Clone</b> writes the next prompt.', 62, 52, 23.25, 35.4);
+const JUN_PROMPT = 'Let’s keep scope to the room and Revert flow, then run one end-to-end test before launch.';
+function composer2(x, y, w, body, author) {
+  return add(`<div class="txt">${body}</div><div class="foot"><span style="font-size:20px;color:#5b6472">+</span><b style="font-weight:600" class="auth">${author}</b><span style="color:#8a8f98;margin-left:-8px">⌄</span><span class="tog"><i></i></span><span class="sp"></span><span>» GPT-6 Astra ⌄</span><span style="color:#8a8f98">Extra High ⌄</span><span class="sendb">↑</span></div>`, { left: x + 'px', top: y + 'px', width: w + 'px' }, 'card comp');
 }
-// ───────── S6  35.8–46.6  Clone knows what's next.
-headline('Clone knows <b>what’s next.</b>', 150, 64, 35.85, 46.4, 'navy');
 {
-  const P = 'Let’s open with the real product and show its value in the first 30 seconds.';
-  const c = composer(240, 300, 800, `<span id="g6" style="color:#a5abb5">${P}</span><span class="tabchip" id="tc6">Tab</span>`);
+  const c = composer2(250, 250, 780, '<span id="g5" style="color:#a5abb5"></span><span class="tabchip" id="tc5" style="opacity:0">Tab</span>', 'Clone Min');
+  c.style.scale = '1.2'; c.style.transformOrigin = '50% 0';
+  show(c, 23.8, 31.2);
+  c.querySelector('.txt').style.whiteSpace = 'normal';
+  hooks.push((t) => { c.querySelector('.auth').textContent = t >= 26.4 ? 'Clone Jun' : 'Clone Min'; });
+  const menu = add(`<div style="font-size:12.5px;color:#8a8f98;padding:4px 10px 6px">Predict the next prompt as</div>` +
+    [['M', C.M, 'Clone Min', '✓'], ['J', C.J, 'Clone Jun', ''], ['S', C.S, 'Clone Sara', '']].map(([n, col, name, chk], i) => `<div style="display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:10px;font-size:16px;${i === 1 ? 'background:var(--hl,transparent)' : ''}" ${i === 1 ? 'id="rowJ"' : ''}>${av(n, col, 's clone')}<span>${name}</span><span style="margin-left:auto">${chk}</span></div>`).join(''),
+    { left: '196px', top: '392px', width: '270px', padding: '8px' }, 'card');
+  menu.style.zIndex = 5;
+  show(menu, 24.8, null, 'pop', .35);
+  A(menu, [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.96)' }], 26.4, .2, { fill: 'forwards' });
+  A(menu.querySelector('#rowJ'), [{ background: 'transparent' }, { background: '#eef4fd' }], 25.9, .2);
+  cursor('', '#1d8cf0', [[24.4, 820, 620], [26.0, 300, 486], [26.6, 300, 486], [27.6, 560, 600]], 24.4, 28.2);
+  const ring = add('', { left: '277px', top: '463px' }, 'ring'); ring.style.borderColor = '#1d8cf0'; A(ring, [{ opacity: .9, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], 26.3, .5, { fill: 'none' });
+  A(c, [{ boxShadow: '0 0 0 1px #e8eaee, 0 18px 50px rgba(20,50,110,.10)' }, { boxShadow: '0 0 0 1.5px #8cc6fb, 0 0 0 7px rgba(29,140,240,.12), 0 18px 50px rgba(29,140,240,.22)' }], 26.5, .35);
+  const wr = add(`<span style="color:var(--blue);font-weight:600;font-size:15px">● Clone Jun is writing a prompt…</span>`, { left: '176px', top: '214px' }); show(wr, 26.6, 28.6, 'fade', .3);
+  typer(c.querySelector('#g5'), JUN_PROMPT, 28.7, 70);
+  A(c.querySelector('#tc5'), [{ opacity: 0 }, { opacity: 1 }], 30.0, .2);
+  realClip('a', 138, 31.45, 35.3);
+}
+// ───────── S6  35.8–46.6  Jun's Clone wrote it. Min sent it.
+headline('Jun’s Clone wrote it. <b>Min sent it.</b>', 150, 60, 35.85, 46.4, 'navy');
+{
+  const c = composer2(240, 300, 800, `<span id="g6" style="color:#a5abb5">${JUN_PROMPT}</span><span class="tabchip" id="tc6">Tab</span>`, 'Clone Jun');
   c.style.scale = '1.2'; c.style.transformOrigin = '50% 0'; show(c, 36.5, 46.3);
+  c.querySelector('.txt').style.whiteSpace = 'normal';
   A(c.querySelector('#g6'), [{ color: '#a5abb5' }, { color: '#0c1322' }], 39.6, .25);
   A(c.querySelector('#tc6'), [{ opacity: 1 }, { opacity: 0 }], 39.6, .2, { fill: 'forwards' });
   A(c, [{ boxShadow: '0 0 0 1px #e8eaee, 0 18px 50px rgba(20,50,110,.10)' }, { boxShadow: '0 0 0 1.5px #8cc6fb, 0 0 0 7px rgba(29,140,240,.12), 0 18px 50px rgba(29,140,240,.22)' }], 40.45, .35);
   A(c.querySelector('.tog'), [{ background: '#d9dce1' }, { background: '#1d8cf0' }], 40.45, .25);
   A(c.querySelector('.tog i'), [{ left: '2px' }, { left: '15px' }], 40.45, .25);
-  const wk = add(`<span style="color:var(--blue);font-weight:600;font-size:15px">● Clone Min is working…</span>`, { left: '164px', top: '262px' }); show(wk, 40.7, 46.3, 'fade', .3);
+  const wk = add(`<span style="color:var(--blue);font-weight:600;font-size:15px">● Clone Jun is working…</span>`, { left: '164px', top: '262px' }); show(wk, 40.7, 46.3, 'fade', .3);
   [[39.6, 60], [40.45, 146]].forEach(([t, x]) => {
     const k = add('<span>→</span><span>tab</span>', { left: x + 'px' }, 'key'); show(k, t - .25, 42.2, 'pop', .3);
     A(k, [{ translate: '0 0' }, { translate: '0 5px' }, { translate: '0 0' }], t, .3, { easing: 'ease-out' });
   });
-  const s = add('It predicts your next prompt. Tab, Tab, and it’s sent.', { top: '480px' }, 'sub'); show(s, 41.2, 46.3);
+  const s = add('Any teammate’s Clone can write the next prompt. Tab, Tab, and it’s sent.', { top: '500px' }, 'sub'); show(s, 41.2, 46.3);
 }
 // ───────── S7  46.8–58.6  Every Clone votes for its human.
 headline('Every Clone votes for <b>its human.</b>', 62, 60, 46.85, 53.6);
@@ -226,56 +237,52 @@ function proposal(title, rows, x, y) {
     { left: x + 'px', top: y + 'px' }, 'card prop');
 }
 {
-  const p = proposal('Open with the real product and show value in 30 seconds', [
+  const p = proposal('Build the room and Revert flow, then run one end-to-end test', [
     { k: 'm', av: av('M', C.M, 's'), label: 'Min', val: 'Approved' },
-    { k: 'j', av: av('J', C.J, 's clone'), label: 'Clone Jun predicts', val: '<span id="n7j">0%</span>', why: 'Small demo scope; a working end-to-end flow matters most.' },
-    { k: 's', av: av('S', C.S, 's clone'), label: 'Clone Sara predicts', val: '<span id="n7s">0%</span>', why: 'Real product value quickly is exactly how I’d open.' },
-  ], 320, 210);
-  p.style.width = '700px'; p.style.left = '290px'; p.style.scale = '1.2'; p.style.transformOrigin = '50% 0';
+    { k: 'j', av: av('J', C.J, 's clone'), label: 'Clone Jun predicts', val: '<span id="n7j">0%</span>', why: 'This keeps scope tight and makes a working end-to-end test a launch gate.' },
+    { k: 's', av: av('S', C.S, 's clone'), label: 'Clone Sara predicts', val: '<span id="n7s">0%</span>', why: 'A real demo tonight fits her preference, though she may push for early user invites.' },
+  ], 290, 210);
+  p.style.width = '700px'; p.style.scale = '1.2'; p.style.transformOrigin = '50% 0';
   show(p, 47.5, 58.3);
   const bars = p.querySelectorAll('.bar i');
-  [[0, 100, 48.3], [1, 92, 48.9], [2, 99, 49.5]].forEach(([i, v, t]) => A(bars[i], [{ width: '0%' }, { width: v + '%' }], t, 1.0));
-  hooks.push((t) => { const f = (t0, v) => Math.round(v * Math.max(0, Math.min(1, (t - t0) / 1.0))) + '%'; p.querySelector('#n7j').textContent = f(48.9, 92); p.querySelector('#n7s').textContent = f(49.5, 99); });
+  [[0, 100, 48.3], [1, 96, 48.9], [2, 84, 49.5]].forEach(([i, v, t]) => A(bars[i], [{ width: '0%' }, { width: v + '%' }], t, 1.0));
+  hooks.push((t) => { const f = (t0, v) => Math.round(v * Math.max(0, Math.min(1, (t - t0) / 1.0))) + '%'; p.querySelector('#n7j').textContent = f(48.9, 96); p.querySelector('#n7s').textContent = f(49.5, 84); });
   const bd = add('<span class="pill ok">Auto-approved · Team Clone Mode</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(bd); A(bd, FX.pop, 51.0, .45);
   const plan = add(`<div style="display:flex;gap:12px;align-items:center;font-size:16px"><span style="width:20px;height:20px;border-radius:6px;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:13px">✓</span><span>Added to the <b>team plan</b> · anyone can Revert</span></div>`, { left: '452px', top: '560px', padding: '14px 20px' }, 'card');
   show(plan, 52.0, 58.3, 'up', .6);
 }
-// ───────── S8  58.8–67.1  fun fact
-A(document.getElementById('tint'), [{ opacity: 0 }, { opacity: 1 }], 61.2, .5); A(document.getElementById('tint'), [{ opacity: 1 }, { opacity: 0 }], 66.9, .4, { fill: 'forwards' });
-headline('It’s not just <b>guessing.</b>', 290, 88, 58.85, 61.1, 'navy');
+// ───────── S8  58.8–67.1  Anyone can steer
+headline('Same session. <b>Anyone can steer.</b>', 62, 60, 58.85, 66.9);
 {
-  const ff = add('<span class="pill blue">Fun fact</span>', { left: 0, right: 0, top: '150px', textAlign: 'center' }); show(ff, 61.4, 66.8, 'pop', .4);
-  const n = add('<span id="n8">0.0</span><b>%</b>', { left: 0, right: 0, top: '205px', textAlign: 'center' }, 'abs big'); show(n, 61.5, 66.8);
-  hooks.push((t) => { const k = Math.max(0, Math.min(1, (t - 61.6) / 1.0)); n.querySelector('#n8').textContent = (90 + 3.9 * (1 - Math.pow(1 - k, 3))).toFixed(1); });
-  const s1 = add('Clone-0 predicts what a person will do next', { top: '428px', fontSize: '26px', color: '#0c1322', fontWeight: 600 }, 'sub'); show(s1, 62.4, 66.8);
-  const s2 = add('Human Model Benchmark · DataClaw · 1,257 samples &nbsp;·&nbsp; GPT-6 Astra 88.5% &nbsp;·&nbsp; Claude Opus 5.5 63.2%', { top: '478px', fontSize: '17px' }, 'sub'); show(s2, 63.0, 66.8);
+  const b = add(`<div class="who" style="margin-bottom:8px">${av('J', C.J, 's')}Jun</div><div class="bubble" style="position:static;display:inline-block;font-size:22px;padding:14px 22px">Keep it to one flow: join, ask, approve. Ten minutes max.</div>`, { left: '300px', top: '300px' });
+  show(b, 59.6, 61.3);
+  realClip('c', 162, 61.5, 66.9);
 }
 // ───────── S9  67.3–79.6  dissent + learn
 headline('Risky call? Only <b>the dissenter</b> gets pinged.', 62, 52, 67.35, 74.0);
 headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
 {
-  const p = proposal('Ship the demo build without the end-to-end test', [
+  const p = proposal('Ship tonight without the end-to-end test', [
     { k: 'm', av: av('M', C.M, 's'), label: 'Min', val: 'Approved' },
-    { k: 'j', av: `<span style="position:relative;display:inline-block;width:26px;height:26px"><span id="j9a" style="position:absolute;inset:0">${av('J', C.J, 's clone')}</span><span id="j9b" style="position:absolute;inset:0;opacity:0">${av('J', C.J, 's')}</span></span>`, label: '<span id="l9a">Clone Jun predicts</span>', val: '<span id="v9">5%</span>', amber: true },
-    { k: 's', av: av('S', C.S, 's clone'), label: 'Clone Sara predicts', val: '85%', why: 'I’d rather demo something real tonight than polish another week.' },
+    { k: 'j', av: `<span style="position:relative;display:inline-block;width:26px;height:26px"><span id="j9a" style="position:absolute;inset:0">${av('J', C.J, 's clone')}</span><span id="j9b" style="position:absolute;inset:0;opacity:0">${av('J', C.J, 's')}</span></span>`, label: '<span id="l9a">Clone Jun predicts</span>', val: '<span id="v9">10%</span>', amber: true },
+    { k: 's', av: av('S', C.S, 's clone'), label: 'Clone Sara predicts', val: '90%', why: 'Prefers a real demo tonight over delaying for polish.' },
   ], 290, 200);
   p.style.width = '700px'; p.style.scale = '1.2'; p.style.transformOrigin = '50% 0';
   p.insertAdjacentHTML('beforeend', `<div style="display:flex;gap:10px;margin-top:20px" id="b9"><span class="btn" id="ap9">Approve</span><span class="btn g">Reject</span><span style="flex:1"></span><span style="color:#8a8f98;font-size:13.5px;align-self:center">Only Jun sees these buttons</span></div>`);
   show(p, 68.0, 74.75);
   realClip('b', 132, 75.0, 79.3);
   const bars = p.querySelectorAll('.bar i');
-  A(bars[0], [{ width: '0%' }, { width: '100%' }], 68.6, .9); A(bars[1], [{ width: '0%' }, { width: '5%' }], 69.0, .9); A(bars[2], [{ width: '0%' }, { width: '85%' }], 69.4, .9);
+  A(bars[0], [{ width: '0%' }, { width: '100%' }], 68.6, .9); A(bars[1], [{ width: '0%' }, { width: '10%' }], 69.0, .9); A(bars[2], [{ width: '0%' }, { width: '90%' }], 69.4, .9);
   const b1 = add('<span class="pill wait">Needs Jun</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(b1); A(b1, FX.pop, 70.2, .45); A(b1, [{ opacity: 1 }, { opacity: 0 }], 73.0, .2, { fill: 'forwards' });
   const b2 = add('<span class="pill ok">Approved by the team</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(b2); A(b2, FX.pop, 73.15, .45);
-  // Jun clicks Approve at 72.8
-  cursor('Jun', C.J, [[70.6, 1120, 600], [72.4, 300, 494], [73.6, 300, 494], [74.7, 420, 520]], 70.6, 74.6);
-  const ring = add('', { left: '284px', top: '476px' }, 'ring'); A(ring, [{ opacity: .9, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], 72.8, .55, { fill: 'none' });
+  cursor('Jun', C.J, [[70.6, 1120, 600], [72.4, 300, 470], [73.6, 300, 470], [74.7, 420, 520]], 70.6, 74.6);
+  const ring = add('', { left: '284px', top: '452px' }, 'ring'); A(ring, [{ opacity: .9, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], 72.8, .55, { fill: 'none' });
   A(p.querySelector('#ap9'), [{ transform: 'scale(1)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }], 72.8, .3);
-  A(bars[1], [{ width: '5%', background: '#d98a00' }, { width: '100%', background: '#12a37f' }], 73.0, .8);
+  A(bars[1], [{ width: '10%', background: '#d98a00' }, { width: '100%', background: '#12a37f' }], 73.0, .8);
   A(p.querySelector('#j9a'), [{ opacity: 1 }, { opacity: 0 }], 73.0, .25); A(p.querySelector('#j9b'), [{ opacity: 0 }, { opacity: 1 }], 73.0, .25);
-  hooks.push((t) => { p.querySelector('#l9a').textContent = t >= 73.05 ? 'Jun' : 'Clone Jun predicts'; p.querySelector('#v9').textContent = t >= 73.05 ? 'Approved' : '5%'; });
+  hooks.push((t) => { p.querySelector('#l9a').textContent = t >= 73.05 ? 'Jun' : 'Clone Jun predicts'; p.querySelector('#v9').textContent = t >= 73.05 ? 'Approved' : '10%'; });
   A(p.querySelector('#b9'), [{ opacity: 1 }, { opacity: 0 }], 73.2, .3, { fill: 'forwards' });
-  const toast = add(`${av('J', C.J, 's clone')}<span><b>Clone Jun learned</b> · Accepted “Ship the demo build without the end-to-end test” although Clone predicted 5%</span>`, { left: '176px', top: '596px' }, 'toast');
+  const toast = add(`${av('J', C.J, 's clone')}<span><b>Clone Jun learned</b> · Accepted “Ship tonight without the end-to-end test” although Clone predicted 10%</span>`, { left: '210px', top: '596px' }, 'toast');
   show(toast, 73.5, 74.75, 'up', .45);
 }
 // ───────── S10  79.8–86  end
