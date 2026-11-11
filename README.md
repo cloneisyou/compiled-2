@@ -2,6 +2,8 @@
 
 **Multiplayer AI for teams. Every teammate is always in the room, even when they're not.**
 
+**Track:** YC Request for Startups, Fall 2026: **Multiplayer AI** — teammates join the same live AI session, see the work, steer it, and take it over.
+
 Built at **c0mpiled-18 · YC Startup School Hackathon, Taipei** (Nov 11, 2026) on top of
 [Clone](https://clone.is)'s Team workspace.
 

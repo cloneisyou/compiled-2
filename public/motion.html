@@ -149,6 +149,7 @@ headline('Your team <b>isn’t.</b>', 220, 96, 4.55, 8.1);
   show(logo, 8.45, 12.4);
   const p = add(`<span class="pill blue" style="font-size:16px;padding:8px 18px">Team Rooms</span>`, { left: 0, right: 0, top: '372px', textAlign: 'center' }); show(p, 9.1, 12.4, 'pop', .5);
   const s = add('Multiplayer AI for your whole team', { top: '432px' }, 'sub'); show(s, 9.5, 12.4);
+  const y = add('Built for YC’s Request for Startups · Fall 2026 · <b style="color:#0c1322">Multiplayer AI</b>', { top: '640px', fontSize: '16px' }, 'sub'); show(y, 10.0, 12.4, 'fade', .6);
   const m = mascot(596, 520, 7); show(m, 9.9, 12.4, 'pop', .5);
   A(m, [{ translate: '0 0' }, { translate: '0 -22px' }, { translate: '0 0' }, { translate: '0 -12px' }, { translate: '0 0' }], 10.4, 1.3, { easing: 'ease-in-out' });
 }
@@ -169,6 +170,7 @@ headline('Even when they’re <b>away.</b>', 70, 64, 17.9, 22.9);
   mk('S', C.S, 950, 18.5, true);
   const tag = add(`<span class="pill" style="background:#fff;box-shadow:0 0 0 1px var(--line),0 8px 20px rgba(20,50,110,.12);color:var(--ink);font-size:14px;padding:8px 14px"><b style="color:${C.S}">Clone Sara</b> · standing in</span>`, { left: '882px', top: '292px' });
   show(tag, 19.0, 22.8, 'pop', .45);
+  const live = add('See the work live. Steer it. Take it over.', { top: '486px', fontSize: '24px', color: '#0c1322', fontWeight: 600 }, 'sub'); show(live, 15.0, 22.8);
   cursor('Min', C.M, [[14.3, 420, 520], [16, 560, 372], [18, 470, 430], [20.2, 640, 300], [22.6, 600, 330]], 14.3, 22.7);
   cursor('Jun', C.J, [[15.2, 1100, 560], [16.6, 850, 400], [18.4, 930, 330], [20.6, 780, 420], [22.6, 820, 390]], 15.2, 22.7);
 }
@@ -272,7 +274,7 @@ headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
   headline('Clone <b>Team Rooms</b>', 322, 76, 80.3, null);
   const s = add('Humans and their Clones, deciding together.', { top: '424px' }, 'sub'); show(s, 81.0, null);
   const l = add(`<span class="pill" style="background:#eef1f5;color:#0c1322;font-size:16px;padding:10px 20px;font-weight:600">🔗 github.com/cloneisyou/compiled-2</span>`, { left: 0, right: 0, top: '488px', textAlign: 'center' }); show(l, 81.6, null, 'pop', .45);
-  const c = add('Built tonight at c0mpiled Taipei · on Clone’s Team workspace', { top: '560px', fontSize: '15px', color: '#9aa1ac' }, 'sub'); show(c, 82.2, null, 'fade', .6);
+  const c = add('Built tonight at c0mpiled Taipei · YC Request for Startups, Fall 2026: Multiplayer AI', { top: '560px', fontSize: '15px', color: '#9aa1ac' }, 'sub'); show(c, 82.2, null, 'fade', .6);
 }
 
 window.DURATION = 86;
