@@ -94,7 +94,14 @@ function renderDoc() {
     }`;
 }
 
+const seenMsgs = new Set();
 function renderMessage(msg) {
+  const html = renderMessageInner(msg);
+  const fresh = !firstRender && !seenMsgs.has(msg.id);
+  seenMsgs.add(msg.id);
+  return fresh ? html.replace('class="msg ', 'class="msg new ') : html; // only new messages animate in
+}
+function renderMessageInner(msg) {
   const text = esc(msg.text).replace(/@(\w+)/g, '<span class="mention">@$1</span>');
   const props = room.proposals.filter((p) => p.messageId === msg.id).map(renderProposal).join('');
   if (msg.kind === 'human' && msg.author === ME) return `<div class="msg mine"><div class="bubble">${text}</div></div>`;
