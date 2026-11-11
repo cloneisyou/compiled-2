@@ -3,31 +3,35 @@ const ME = params.get('as') || 'min';
 const SHOW_POINTER = params.get('pointer') === '1';
 let room = null;
 let thinking = 0;
+let thinkingKind = 'reply';
 let team = params.get('ws') === 'team';
 let cloneOf = ME; // whose Clone predicts the next prompt
 let predictingClone = null;
+let cloneMode = false;
 const typing = new Map();
 const seenPlan = new Set();
-const seenLessons = new Set();
 const seenOnline = new Set();
+const seenMsgs = new Set();
 let firstRender = true;
 
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const member = (id) => room.members.find((m) => m.id === id);
 const isOnline = (id) => room.online.includes(id);
-const pct = (n) => `${Math.round(n * 100)}%`;
 const av = (m, { clone = false, cls = '' } = {}) => `<span class="av ${cls} ${clone ? 'clone' : ''}" style="--c:${m.color}">${m.name[0]}</span>`;
 const aiAv = (cls = '') => `<span class="av ai ${cls}">»</span>`;
 const PROJECTS = [['💼', 'Business'], ['🔬', 'Research'], ['📦', 'Product'], ['📣', 'Marketing'], ['🛠', 'Engineering'], ['🎨', 'Design'], ['⚙️', 'Operations']];
 
 function render() {
   const me = member(ME);
+  const driver = member(room.driver);
   $('app').classList.toggle('team', team);
   $('app').classList.toggle('noside', params.get('side') === '0');
   $('account').innerHTML = `${av(me, { cls: 'sm' })}${esc(me.name)} <span class="dim">· Clonist</span>`;
   $('author').textContent = `Clone ${member(cloneOf).name} ⌄`;
-  $('cloneMenu').innerHTML = `<div class="menu-label">Predict the next prompt as</div>` + room.members.map((m) => `<button type="button" class="menu-item" data-clone="${m.id}">${av(m, { clone: true, cls: 'sm' })}Clone ${esc(m.name)}<span class="check">${m.id === cloneOf ? '✓' : ''}</span></button>`).join('');
+  $('cloneMenu').innerHTML =
+    `<div class="menu-label">Predict the next prompt as</div>` +
+    room.members.map((m) => `<button type="button" class="menu-item" data-clone="${m.id}">${av(m, { clone: true, cls: 'sm' })}Clone ${esc(m.name)}<span class="check">${m.id === cloneOf ? '✓' : ''}</span></button>`).join('');
   $('chkPersonal').textContent = team ? '' : '✓';
   $('chkTeam').textContent = team ? '✓' : '';
   $('sbLabel').textContent = team ? 'Team · Clone' : 'Projects';
@@ -40,6 +44,11 @@ function render() {
         .join('')
     : PROJECTS.map(([i, n]) => `<div class="sb-item"><span>${i}</span><span>${n}</span></div>`).join('');
   $('goalChip').textContent = team ? room.name : 'New goal';
+  // Who is driving the shared session; anyone else can take it over.
+  $('sessionbar').innerHTML = team
+    ? `${av(driver, { cls: 'sm' })}<span><b>${driver.id === ME ? 'You' : esc(driver.name)}</b> ${driver.id === ME ? 'are' : 'is'} driving</span>${driver.id !== ME ? '<button type="button" class="btn small" id="takeover">Take over</button>' : ''}`
+    : '';
+  $('sessionbar').hidden = !team;
 
   $('presence').innerHTML = room.members
     .map((m) => {
@@ -65,39 +74,29 @@ function render() {
 
 function renderDoc() {
   const owners = room.members.map((m) => av(m, { clone: !isOnline(m.id), cls: 'sm' })).join('');
+  const driver = member(room.driver);
   const plan = room.plan
     .map((p) => {
       const fresh = !firstRender && !seenPlan.has(p.id);
       seenPlan.add(p.id);
-      const prop = room.proposals.find((x) => x.id === p.proposalId);
-      return `<div class="todo done ${fresh ? 'fresh' : ''}"><span class="cb">✓</span><span>${esc(p.text)}${prop ? `<span class="by">${prop.auto ? 'Approved by Team Clone Mode' : 'Approved by the team'}</span>` : ''}</span></div>`;
+      const by = p.by && member(p.by);
+      const via = p.via && member(p.via);
+      const meta = by ? `<span class="by">Team AI · asked by ${esc(by.name)}${via ? ` · written by Clone ${esc(via.name)}` : ''}</span>` : '';
+      return `<div class="todo ${by ? 'live' : 'done'} ${fresh ? 'fresh' : ''}"><span class="cb">${by ? '' : '✓'}</span><span>${esc(p.text)}${meta}</span></div>`;
     })
     .join('');
-  const lessons = room.members.flatMap((m) => m.learned.map((l) => ({ m, l })));
   $('doc').innerHTML = `<div class="gid">G-118</div><h2>${esc(room.name)}</h2>
     <div class="prop"><span class="k">📦</span>Product</div>
     <div class="prop"><span class="k">▮</span>High</div>
     <div class="prop"><span class="owners">${owners}</span><span class="dim">Min, Jun, Sara</span></div>
+    <div class="prop">${av(driver, { cls: 'sm' })}<span><b>${esc(driver.name)}</b> is driving</span></div>
     <div class="sepline"></div>
     <div class="statusrow"><span class="dot"></span>In progress</div>
     <div class="sepline"></div>
     <p>${esc(room.goal)}.</p>
-    <h4>Team plan</h4>${plan}
-    <h4>Clones learning</h4>${
-      lessons.length
-        ? lessons
-            .map(({ m, l }) => {
-              const k = m.id + l;
-              const fresh = !firstRender && !seenLessons.has(k);
-              seenLessons.add(k);
-              return `<div class="lesson ${fresh ? 'fresh' : ''}">${av(m, { clone: true, cls: 'sm' })}<span><b>Clone ${esc(m.name)}</b> ${esc(l)}</span></div>`;
-            })
-            .join('')
-        : `<div class="emptynote">When someone overrides their Clone, it learns here.</div>`
-    }`;
+    <h4>Team plan</h4>${plan}`;
 }
 
-const seenMsgs = new Set();
 function renderMessage(msg) {
   const html = renderMessageInner(msg);
   const fresh = !firstRender && !seenMsgs.has(msg.id);
@@ -105,44 +104,19 @@ function renderMessage(msg) {
   return fresh ? html.replace('class="msg ', 'class="msg new ') : html; // only new messages animate in
 }
 function renderMessageInner(msg) {
-  const text = esc(msg.text).replace(/@(\w+)/g, '<span class="mention">@$1</span>');
-  const props = room.proposals.filter((p) => p.messageId === msg.id).map(renderProposal).join('');
-  const via = msg.viaClone && member(msg.viaClone) ? `<div class="via">${av(member(msg.viaClone), { clone: true, cls: 'sm' })}Written by Clone ${esc(member(msg.viaClone).name)}</div>` : '';
-  if (msg.kind === 'human' && msg.author === ME) return `<div class="msg mine"><div class="minecol">${via}<div class="bubble">${text}</div></div></div>`;
+  const text = esc(msg.text);
+  if (msg.kind === 'event') return `<div class="msg event">${av(member(msg.author), { cls: 'sm' })}<span>${text}</span></div>`;
+  const viaM = msg.viaClone && member(msg.viaClone);
+  if (msg.kind === 'human' && msg.author === ME) {
+    const via = viaM ? `<div class="via">${av(viaM, { clone: true, cls: 'sm' })}Written by Clone ${esc(viaM.name)}</div>` : '';
+    return `<div class="msg mine"><div class="minecol">${via}<div class="bubble">${text}</div></div></div>`;
+  }
   if (msg.kind === 'human') {
     const m = member(msg.author);
-    return `<div class="msg other"><div class="who">${av(m, { cls: 'sm' })}${esc(m.name)}${msg.viaClone && member(msg.viaClone) ? `<span class="note">· written by Clone ${esc(member(msg.viaClone).name)}</span>` : ''}</div><div class="bubble">${text}</div></div>`;
+    return `<div class="msg other"><div class="who">${av(m, { cls: 'sm' })}${esc(m.name)}${viaM ? `<span class="note">· written by Clone ${esc(viaM.name)}</span>` : ''}</div><div class="bubble">${text}</div></div>`;
   }
-  if (msg.kind === 'clone') {
-    const m = member(msg.author);
-    return `<div class="msg clone"><div class="who">${av(m, { clone: true, cls: 'sm' })}Clone ${esc(m.name)}<span class="note">on behalf of ${esc(m.name)} · ${pct(msg.confidence)} sure</span></div><div class="body">${text}</div></div>`;
-  }
-  return `<div class="msg ai${msg.error ? ' error' : ''}"><div class="who">${aiAv('sm')}Team AI</div><div class="body">${text}</div>${props}</div>`;
-}
-
-function renderProposal(p) {
-  const waitingOn = room.members.filter((m) => p.votes[m.id].accept < room.autoApprove && p.votes[m.id].source === 'clone');
-  const status =
-    p.status === 'approved'
-      ? `<span class="st ok">${p.auto ? 'Auto-approved · Team Clone Mode' : 'Approved by the team'}</span>`
-      : p.status === 'reverted'
-        ? `<span class="st bad">Reverted by ${esc(member(p.revertedBy).name)}</span>`
-        : p.status === 'rejected'
-          ? `<span class="st bad">Rejected</span>`
-          : `<span class="st wait">Needs ${waitingOn.map((m) => esc(m.name)).join(' & ') || 'the team'}</span>`;
-  const rows = room.members
-    .map((m) => {
-      const v = p.votes[m.id];
-      const clone = v.source === 'clone';
-      const yes = v.accept >= room.autoApprove;
-      return `<div class="vote ${yes ? 'yes' : 'no'} ${clone ? 'byclone' : 'byhuman'}">${av(m, { clone, cls: 'sm' })}<span>${clone ? `Clone ${esc(m.name)} predicts` : esc(m.name)}</span><span class="bar"><i style="width:${Math.round(v.accept * 100)}%"></i></span><span class="vv">${clone ? pct(v.accept) : v.accept ? 'Approved' : 'Rejected'}</span>${clone && v.reason ? `<span class="why">${esc(v.reason)}</span>` : ''}</div>`;
-    })
-    .join('');
-  const mine = p.votes[ME];
-  let actions = '';
-  if (p.status === 'waiting' && mine.source === 'clone') actions = `<button type="button" class="btn" data-vote="1" data-p="${p.id}">Approve</button><button type="button" class="btn ghostbtn" data-vote="0" data-p="${p.id}">Reject</button>`;
-  else if (p.status === 'approved') actions = `<button type="button" class="btn ghostbtn" data-vote="0" data-p="${p.id}">Revert</button>`;
-  return `<div class="proposal ${p.status}"><div class="ph"><span class="pt">${esc(p.title)}</span>${status}</div>${rows}${actions ? `<div class="actions">${actions}</div>` : ''}</div>`;
+  const hand = msg.handoff && member(msg.handoff);
+  return `<div class="msg ai${msg.error ? ' error' : ''}${hand ? ' handoff' : ''}"><div class="who">${aiAv('sm')}Team AI${hand ? `<span class="note">· handoff for ${esc(hand.name)}</span>` : ''}</div><div class="body">${text}</div></div>`;
 }
 
 const suggestion = () => (team && room?.suggestions?.[cloneOf]) || '';
@@ -157,23 +131,14 @@ function renderStatus() {
   const bits = [];
   for (const [id] of typing) if (id !== ME && member(id)) bits.push(`${esc(member(id).name)} is typing…`);
   if (predictingClone && member(predictingClone)) bits.push(`<span class="writing">● Clone ${esc(member(predictingClone).name)} is writing a prompt…</span>`);
-  if (thinking > 0) bits.push(`<span class="shimmer">Team AI is consulting ${room.members.length} Clones…</span>`);
+  if (thinking > 0) bits.push(`<span class="shimmer">${thinkingKind === 'handoff' ? 'Team AI is writing a handoff…' : 'Team AI is working…'}</span>`);
   $('status').innerHTML = bits.join(' · ');
   $('composer').classList.toggle('mode', (thinking > 0 && cloneMode) || !!predictingClone);
   $('toggle').classList.toggle('on', cloneMode);
 }
 
-function toast(html) {
-  const t = $('toast');
-  t.innerHTML = html;
-  t.classList.add('show');
-  clearTimeout(toast.timer);
-  toast.timer = setTimeout(() => t.classList.remove('show'), 4500);
-}
-
 const post = (path, body) => fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ as: ME, ...body }) });
 
-let cloneMode = false;
 function send(viaClone = false) {
   const text = $('input').value.trim();
   if (!text || !team) return;
@@ -202,17 +167,16 @@ $('input').addEventListener('keydown', (e) => {
     const s = suggestion();
     if (!$('input').value && s) {
       e.preventDefault();
-      $('input').value = s; // Tab: accept Clone's predicted prompt
+      $('input').value = s; // Tab: accept the prompt the chosen Clone wrote
       renderGhost();
     } else if ($('input').value && $('input').value === s) {
       e.preventDefault();
-      send(true); // Tab Tab: send it in Clone Mode
+      send(true); // Tab Tab: send it
     }
   }
 });
 document.addEventListener('click', (e) => {
-  const b = e.target.closest('button[data-vote]');
-  if (b) return post('/api/vote', { proposalId: b.dataset.p, accept: b.dataset.vote === '1' });
+  if (e.target.closest('#takeover')) return post('/api/takeover', {});
   const cl = e.target.closest('button[data-clone]');
   if (cl) {
     cloneOf = cl.dataset.clone;
@@ -221,7 +185,10 @@ document.addEventListener('click', (e) => {
     if (!suggestion()) post('/api/predict', { clone: cloneOf });
     return;
   }
-  if (e.target.closest('#author')) { $('cloneMenu').hidden = !$('cloneMenu').hidden; return; }
+  if (e.target.closest('#author')) {
+    $('cloneMenu').hidden = !$('cloneMenu').hidden;
+    return;
+  }
   $('cloneMenu').hidden = true;
   const ws = e.target.closest('button[data-ws]');
   if (ws) {
@@ -267,7 +234,9 @@ es.addEventListener('room', (e) => {
   render();
 });
 es.addEventListener('thinking', (e) => {
-  thinking = JSON.parse(e.data).busy;
+  const d = JSON.parse(e.data);
+  thinking = d.busy;
+  thinkingKind = d.kind || 'reply';
   if (thinking === 0) cloneMode = false;
   if (room) {
     renderStatus();
@@ -295,9 +264,4 @@ es.addEventListener('cursor', (e) => {
   el.style.opacity = c.hide ? 0 : 1;
   el.style.left = `${c.x * innerWidth}px`;
   el.style.top = `${c.y * innerHeight}px`;
-});
-es.addEventListener('learned', (e) => {
-  const { memberId, lesson } = JSON.parse(e.data);
-  const m = member(memberId);
-  toast(`${av(m, { clone: true, cls: 'sm' })}<span><b>Clone ${esc(m.name)} learned</b> · ${esc(lesson)}</span>`);
 });

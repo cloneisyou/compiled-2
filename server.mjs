@@ -1,6 +1,6 @@
 // Clone Team Workspace — multiplayer AI for teams.
-// Zero-dependency Node server: static files, Server-Sent Events for realtime,
-// and one shared Team AI that reasons over every teammate's Clone.
+// Zero-dependency Node server: static files, Server-Sent Events for realtime, and
+// ONE shared Team AI session that the whole team sees, steers and can take over.
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -12,7 +12,6 @@ import { seedRoom } from './seed.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const PORT = Number(process.env.PORT || 4317);
-const AUTO_APPROVE = Number(process.env.AUTO_APPROVE || 0.75);
 const STATE_FILE = path.join(ROOT, '.room-state.json');
 
 let room = loadState();
@@ -20,7 +19,9 @@ const clients = new Map(); // clientId -> { res, memberId }
 
 function loadState() {
   try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    const r = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    if (!r.driver) throw new Error('old state');
+    return r;
   } catch {
     return seedRoom();
   }
@@ -32,12 +33,8 @@ function save() {
 }
 
 // ---------- realtime ----------
-function onlineIds() {
-  return [...new Set([...clients.values()].map((c) => c.memberId))];
-}
-function snapshot() {
-  return { ...room, online: onlineIds(), autoApprove: AUTO_APPROVE };
-}
+const onlineIds = () => [...new Set([...clients.values()].map((c) => c.memberId))];
+const snapshot = () => ({ ...room, online: onlineIds() });
 function broadcast(type, payload) {
   const data = `event: ${type}\ndata: ${JSON.stringify(payload)}\n\n`;
   for (const { res } of clients.values()) res.write(data);
@@ -72,17 +69,12 @@ async function llm(prompt) {
     return j.choices[0].message.content;
   }
   // Fallback: the local Codex CLI signed in with ChatGPT.
-  const out = path.join(os.tmpdir(), `ctr-${randomUUID()}.txt`);
+  const out = path.join(os.tmpdir(), `ctw-${randomUUID()}.txt`);
   const bin = process.env.CODEX_BIN || path.join(os.homedir(), '.local/bin/codex');
   await new Promise((resolve, reject) => {
     const p = spawn(
       bin,
-      [
-        'exec', '--skip-git-repo-check', '-s', 'read-only',
-        '-m', process.env.CODEX_MODEL || 'gpt-6-luna',
-        '-c', 'model_reasoning_effort=low', '-c', 'mcp_servers={}',
-        '-o', out, '-',
-      ],
+      ['exec', '--skip-git-repo-check', '-s', 'read-only', '-m', process.env.CODEX_MODEL || 'gpt-6-luna', '-c', 'model_reasoning_effort=low', '-c', 'mcp_servers={}', '-o', out, '-'],
       { cwd: os.tmpdir(), stdio: ['pipe', 'ignore', 'pipe'] },
     );
     let err = '';
@@ -95,86 +87,44 @@ async function llm(prompt) {
   fs.rm(out, () => {});
   return text;
 }
-function parseJson(text) {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  return JSON.parse(text.slice(start, end + 1));
-}
+const parseJson = (text) => JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
 
-function teamBrief(speakerId) {
+const INTRO = `You are the shared Team AI inside a Clone Team Workspace: a multiplayer AI workspace where a whole team works in ONE live session. Every teammate sees the same thread and the same team plan, anyone can steer, and anyone can take the session over.`;
+const NEXT_SHAPE = `"predicted_next": { "<member id>": "the next prompt THAT teammate would send to the Team AI to move the goal forward, in their own voice and priorities, one line, max 16 words, starts with Let's" }`;
+const NEXT_RULE = `- predicted_next: one entry for EVERY teammate id. Each must differ and reflect how that person thinks.`;
+const line = (m) =>
+  m.kind === 'ai'
+    ? `Team AI: ${m.text}`
+    : m.kind === 'event'
+      ? `[${m.text}]`
+      : `${member(m.author)?.name}${m.viaClone ? ` (prompt written by Clone ${member(m.viaClone)?.name})` : ''}: ${m.text}`;
+function context() {
   const online = onlineIds();
-  const lines = room.members.map((m) => {
-    const status = m.id === speakerId ? 'SPEAKING NOW' : online.includes(m.id) ? 'online' : 'OFFLINE (their Clone stands in)';
-    const learned = m.learned.length ? `\n    Corrections this Clone learned from ${m.name}: ${m.learned.map((l) => `"${l}"`).join('; ')}` : '';
-    return `- id=${m.id} ${m.name} (${m.role}) [${status}]\n    How ${m.name} thinks: ${m.memory.join(' ')}${learned}`;
-  });
-  return lines.join('\n');
-}
-
-function buildPrompt(speakerId, text) {
-  const speaker = member(speakerId);
-  const history = room.messages
-    .slice(-14)
-    .map((m) => `${m.kind === 'ai' ? 'Team AI' : m.kind === 'clone' ? `Clone ${member(m.author)?.name}` : member(m.author)?.name}: ${m.text}`)
-    .join('\n');
-  const open = room.proposals.filter((p) => p.status === 'waiting').map((p) => `- ${p.title}`).join('\n') || '(none)';
-  return `You are the shared Team AI inside a Clone Team Workspace: a multiplayer workspace where humans and each teammate's Clone (a model of how that person thinks and decides) work together in realtime.
-
-Team goal: ${room.goal}
+  return `Team goal: ${room.goal}
+Driving the session right now: ${member(room.driver).name}
 Team plan so far:
 ${room.plan.map((p) => `- ${p.text}`).join('\n')}
-Open proposals waiting on humans:
-${open}
 
-Teammates and their Clones:
-${teamBrief(speakerId)}
+Teammates (each has a Clone, a model of how they think):
+${room.members.map((m) => `- id=${m.id} ${m.name} (${m.role}) [${online.includes(m.id) ? 'online' : 'away'}] How ${m.name} thinks: ${m.memory.join(' ')}`).join('\n')}
 
-Recent room conversation:
-${history}
-
-New message from ${speaker.name}: ${text}
-
-Respond as JSON only, no prose outside JSON, with this shape:
-{
-  "reply": "Team AI reply to ${speaker.name}. 1-2 short sentences. Be concrete. If you propose an action, say it.",
-  "proposal": null or { "title": "short imperative action the team would commit to (max 9 words)", "plan_item": "one line to add to the team plan if approved" },
-  "predictions": [ { "member_id": "id", "accept": 0.0-1.0, "reason": "max 12 words, in that teammate's perspective" } ],
-  "predicted_next": { "<member id>": "the next prompt THAT teammate would send to the Team AI to move the goal forward, in their own voice and priorities, one line, max 16 words, starts with Let's" }
-}
-Rules:
-- proposal: include one only when ${speaker.name} proposes an action ("let's...", "we should..."). A question is NOT a proposal: return null. It must be exactly what ${speaker.name} asked for, stated faithfully; never swap in your own counter-plan. Example: if they say \"let's ship without the test\", the title is \"Ship tonight without the end-to-end test\", NOT \"Run the test first\"; predictions are about THAT title. If you have concerns, say them in "reply" and let the predictions surface who disagrees. Otherwise null.
-- reply: never claim the team agreed; the room tallies the votes. Mention which teammates' Clones you expect to object, if any.
-- predicted_next: always include one entry for EVERY teammate id (including ${speaker.name}). Each must differ and reflect how that person thinks; each must be a concrete proposal the rest of the team would plausibly accept.
-- predictions: if there is a proposal, predict for EVERY teammate except ${speaker.name} how likely they accept it, grounded in how they think and corrections they taught their Clone. Be decisive: use values near 0.9+ or below 0.5 when their preferences clearly apply.`;
+Session so far:
+${room.messages.slice(-14).map(line).join('\n')}`;
 }
 
+// Prompt prediction: any teammate's Clone can write the next prompt for the shared session.
 function setSuggestions(map) {
   if (!map || typeof map !== 'object') return;
   room.suggestions = room.suggestions || {};
   for (const m of room.members) if (typeof map[m.id] === 'string' && map[m.id].trim()) room.suggestions[m.id] = map[m.id].trim().slice(0, 200);
 }
-// Prompt prediction: any teammate's Clone can write the next prompt for the shared session.
 let predicting = null;
 async function runPredict(cloneId) {
   if (predicting) return;
   predicting = cloneId;
   broadcast('predicting', { clone: cloneId });
   try {
-    const history = room.messages.slice(-14).map((m) => `${m.kind === 'ai' ? 'Team AI' : member(m.author)?.name}: ${m.text}`).join('\n');
-    const out = parseJson(await llm(`You predict the next prompt each teammate would send to the shared Team AI in a multiplayer workspace.
-
-Team goal: ${room.goal}
-Team plan so far:
-${room.plan.map((p) => `- ${p.text}`).join('\n')}
-
-Teammates (each has a Clone, a model of how they think):
-${teamBrief(null)}
-
-Conversation so far:
-${history}
-
-Respond as JSON only: { "predicted_next": { "<member id>": "the next prompt THAT teammate would send to move the goal forward, in their own voice and priorities, one line, max 16 words, starts with Let's" } }
-Include every teammate id. Each must differ and reflect how that person thinks, and be a concrete proposal the rest of the team would plausibly accept.`));
+    const out = parseJson(await llm(`${INTRO}\n\n${context()}\n\nRespond as JSON only:\n{ ${NEXT_SHAPE} }\nRules:\n${NEXT_RULE}`));
     setSuggestions(out.predicted_next);
   } catch (e) {
     console.error('[predict]', e.message);
@@ -186,94 +136,82 @@ Include every teammate id. Each must differ and reflect how that person thinks, 
 }
 
 let busy = 0;
-async function runTeamAi(speakerId, text) {
+async function runModel(kind, prompt, onResult) {
   busy++;
-  broadcast('thinking', { busy, speakerId });
+  broadcast('thinking', { busy, kind });
   try {
-    const result = parseJson(await llm(buildPrompt(speakerId, text)));
-    const ai = pushMessage({ kind: 'ai', author: 'ai', text: result.reply || '…' });
-    // Structure is decided by what the human wrote, not by the model: a question is
-    // never a proposal, and "let's …" always is (stated as the human asked it).
-    const asksToAct = /\blet['\u2019]s\b|\bwe should\b/i.test(text);
-    if (!asksToAct) result.proposal = null;
-    else if (!result.proposal || !result.proposal.title) result.proposal = { title: text.replace(/^.*?\blet['\u2019]s\s+/i, '').replace(/[.!]+$/, '').replace(/^./, (c) => c.toUpperCase()).slice(0, 70), plan_item: text };
-    if (result.proposal && result.proposal.title) createProposal(speakerId, result.proposal, result.predictions || [], ai.id);
-    setSuggestions(result.predicted_next);
+    onResult(parseJson(await llm(prompt)));
   } catch (e) {
-    console.error('[team-ai]', e.message);
+    console.error(`[${kind}]`, e.message);
     pushMessage({ kind: 'ai', author: 'ai', text: `I couldn't reach the model (${e.message.slice(0, 80)}). Try again.`, error: true });
   } finally {
     busy--;
-    broadcast('thinking', { busy });
+    broadcast('thinking', { busy, kind });
     sync();
   }
 }
-const clamp = (n) => Math.max(0, Math.min(1, Number(n) || 0));
 
-function createProposal(speakerId, proposal, predictions, messageId) {
-  const votes = {};
-  votes[speakerId] = { accept: 1, source: 'human', reason: 'Proposed it' };
-  for (const m of room.members) {
-    if (m.id === speakerId) continue;
-    const p = predictions.find((x) => x.member_id === m.id) || { accept: 0.5, reason: 'No signal yet' };
-    votes[m.id] = { accept: clamp(p.accept), reason: p.reason, source: 'clone' };
-  }
-  const prop = {
-    id: randomUUID(),
-    at: Date.now(),
-    by: speakerId,
-    messageId,
-    title: proposal.title,
-    planItem: proposal.plan_item || proposal.title,
-    votes,
-    status: 'waiting',
-  };
-  room.proposals.push(prop);
-  settle(prop);
+// A teammate (or a Clone on their behalf) prompts the shared session.
+function runTeamAi(speakerId, text, via) {
+  const speaker = member(speakerId);
+  return runModel(
+    'reply',
+    `${INTRO}
+
+${context()}
+
+New message from ${speaker.name}${via ? ` (the prompt was written by Clone ${member(via).name} and sent by ${speaker.name})` : ''}: ${text}
+
+Respond as JSON only:
+{
+  "reply": "1-2 short sentences to the whole room: what you are doing about it. Concrete, no filler.",
+  "plan_item": null or "one short line (max 12 words) to add to the shared team plan as the outcome of this message",
+  ${NEXT_SHAPE}
+}
+Rules:
+- plan_item: include it when the message asks to do, decide or change something; null for a pure question. If the message adjusts earlier work, write the adjusted item.
+- If the message comes from someone other than the previous human speaker, they are steering the same session: follow the new direction and say so.
+${NEXT_RULE}`,
+    (result) => {
+      pushMessage({ kind: 'ai', author: 'ai', text: result.reply || '…' });
+      if (result.plan_item) room.plan.push({ id: randomUUID(), text: String(result.plan_item).slice(0, 140), by: speakerId, via: via || null, at: Date.now() });
+      setSuggestions(result.predicted_next);
+    },
+  );
 }
 
-// Team Clone Mode: if every Clone predicts acceptance above the bar, act now
-// (humans can still Revert). Otherwise only the uncertain humans get asked.
-function settle(prop) {
-  if (prop.status !== 'waiting') return;
-  const votes = Object.values(prop.votes);
-  if (votes.some((v) => v.source === 'human' && v.accept === 0)) {
-    prop.status = 'rejected';
-    return;
-  }
-  if (votes.every((v) => v.accept >= AUTO_APPROVE)) {
-    prop.status = 'approved';
-    prop.decidedAt = Date.now();
-    prop.auto = votes.some((v) => v.source === 'clone');
-    room.plan.push({ id: randomUUID(), text: prop.planItem, proposalId: prop.id, at: Date.now() });
-  }
-}
+// Handoff: someone takes the session over and the Team AI briefs them.
+function takeOver(newId) {
+  const prev = member(room.driver);
+  const next = member(newId);
+  room.driver = newId;
+  pushMessage({ kind: 'event', author: newId, text: `${next.name} took over the session from ${prev.name}` });
+  room.suggestions = {};
+  sync();
+  return runModel(
+    'handoff',
+    `${INTRO}
 
-function vote(prop, memberId, accept) {
-  const prev = prop.votes[memberId];
-  const m = member(memberId);
-  if (prev && prev.source === 'clone') {
-    const predicted = prev.accept >= AUTO_APPROVE;
-    if (predicted !== accept) {
-      const lesson = `${accept ? 'Accepted' : 'Rejected'} "${prop.title}" although Clone predicted ${Math.round(prev.accept * 100)}%`;
-      m.learned.push(lesson);
-      broadcast('learned', { memberId, lesson });
-    }
-  }
-  prop.votes[memberId] = { accept: accept ? 1 : 0, source: 'human', reason: accept ? 'Approved' : 'Rejected', predicted: prev?.accept };
-  if (prop.status === 'approved' && !accept) revert(prop, memberId);
-  else settle(prop);
-}
+${context()}
 
-function revert(prop, memberId) {
-  prop.status = 'reverted';
-  prop.revertedBy = memberId;
-  room.plan = room.plan.filter((p) => p.proposalId !== prop.id);
-  pushMessage({ kind: 'ai', author: 'ai', text: `Reverted "${prop.title}" for ${member(memberId).name}. Clone ${member(memberId).name} learned from it.` });
+${next.name} just took over the session from ${prev.name}.
+
+Respond as JSON only:
+{
+  "reply": "a handoff brief for ${next.name}: exactly 2 short sentences. First: where the work stands. Second: the single next step. Address ${next.name} by name.",
+  ${NEXT_SHAPE}
+}
+Rules:
+${NEXT_RULE}`,
+    (result) => {
+      pushMessage({ kind: 'ai', author: 'ai', text: result.reply || '…', handoff: newId });
+      setSuggestions(result.predicted_next);
+    },
+  );
 }
 
 // ---------- http ----------
-const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png' };
+const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.svg': 'image/svg+xml', '.png': 'image/png', '.jpg': 'image/jpeg' };
 function readBody(req) {
   return new Promise((resolve) => {
     let b = '';
@@ -300,7 +238,6 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, { 'content-type': 'text/event-stream', 'cache-control': 'no-cache', connection: 'keep-alive' });
     const id = randomUUID();
     clients.set(id, { res, memberId });
-    res.write(`event: room\ndata: ${JSON.stringify(snapshot())}\n\n`);
     broadcast('room', snapshot());
     const ping = setInterval(() => res.write(': ping\n\n'), 15000);
     req.on('close', () => {
@@ -319,23 +256,21 @@ const server = http.createServer(async (req, res) => {
       pushMessage({ kind: 'human', author: body.as, text: body.text.trim(), ...(via ? { viaClone: via } : {}) });
       room.suggestions = {};
       sync();
-      runTeamAi(body.as, body.text.trim());
-      return json(res, 200, { ok: true });
-    }
-    if (url.pathname === '/api/vote') {
-      const prop = room.proposals.find((p) => p.id === body.proposalId);
-      if (!prop || !member(body.as)) return json(res, 400, { error: 'bad vote' });
-      vote(prop, body.as, !!body.accept);
-      sync();
-      return json(res, 200, { ok: true });
-    }
-    if (url.pathname === '/api/cursor') {
-      broadcast('cursor', { as: body.as, x: body.x, y: body.y, hide: !!body.hide });
+      runTeamAi(body.as, body.text.trim(), via);
       return json(res, 200, { ok: true });
     }
     if (url.pathname === '/api/predict') {
       if (!member(body.as) || !member(body.clone)) return json(res, 400, { error: 'bad predict' });
       if (!room.suggestions?.[body.clone]) runPredict(body.clone);
+      return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/api/takeover') {
+      if (!member(body.as)) return json(res, 400, { error: 'bad takeover' });
+      if (room.driver !== body.as) takeOver(body.as);
+      return json(res, 200, { ok: true });
+    }
+    if (url.pathname === '/api/cursor') {
+      broadcast('cursor', { as: body.as, x: body.x, y: body.y, hide: !!body.hide });
       return json(res, 200, { ok: true });
     }
     if (url.pathname === '/api/typing') {
@@ -358,6 +293,6 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, '127.0.0.1', () => {
-  console.log(`Clone Team Workspace on http://127.0.0.1:${PORT}/?as=min`);
+  console.log(`Clone Team Workspace on http://127.0.0.1:${PORT}/?as=min&ws=team`);
   console.log(`Model: ${process.env.LLM_BASE_URL ? process.env.LLM_BASE_URL : 'local Codex CLI (ChatGPT sign-in)'}`);
 });

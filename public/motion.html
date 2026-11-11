@@ -185,7 +185,7 @@ headline('Even when they’re <b>away.</b>', 70, 64, 17.9, 22.9);
 }
 // ───────── S5  23.2–35.6  Pick whose Clone writes the next prompt
 headline('Pick <b>whose Clone</b> writes the next prompt.', 62, 52, 23.25, 35.4);
-const JUN_PROMPT = 'Let’s keep scope to the room and Revert flow, then run one end-to-end test before launch.';
+const JUN_PROMPT = 'Let\u2019s verify presence, cursors, shared thread, and prompt ownership end to end before launch.';
 function composer2(x, y, w, body, author) {
   return add(`<div class="txt">${body}</div><div class="foot"><span style="font-size:20px;color:#5b6472">+</span><b style="font-weight:600" class="auth">${author}</b><span style="color:#8a8f98;margin-left:-8px">⌄</span><span class="tog"><i></i></span><span class="sp"></span><span>» GPT-6 Astra ⌄</span><span style="color:#8a8f98">Extra High ⌄</span><span class="sendb">↑</span></div>`, { left: x + 'px', top: y + 'px', width: w + 'px' }, 'card comp');
 }
@@ -228,28 +228,23 @@ headline('Jun’s Clone wrote it. <b>Min sent it.</b>', 150, 60, 35.85, 46.4, 'n
   });
   const s = add('Any teammate’s Clone can write the next prompt. Tab, Tab, and it’s sent.', { top: '500px' }, 'sub'); show(s, 41.2, 46.3);
 }
-// ───────── S7  46.8–58.6  Every Clone votes for its human.
-headline('Every Clone votes for <b>its human.</b>', 62, 60, 46.85, 53.6);
-headline('<b>No meeting.</b>', 50, 84, 53.9, 58.4);
-function proposal(title, rows, x, y) {
-  return add(`<div style="display:flex;align-items:center;gap:12px"><span class="pt" style="flex:1">${title}</span><span class="badges" style="position:relative;height:28px;width:260px"></span></div>` +
-    rows.map((r) => `<div class="row" data-k="${r.k}"><span>${r.av}</span><span class="lab">${r.label}</span><span class="bar"><i class="${r.amber ? 'amber' : ''}"></i></span><span class="vv">${r.val}</span>${r.why ? `<span class="why">${r.why}</span>` : ''}</div>`).join(''),
-    { left: x + 'px', top: y + 'px' }, 'card prop');
-}
+// ───────── S7  46.8–58.6  See the work. Live.
+headline('See the work. <b>Live.</b>', 62, 64, 46.85, 58.4);
 {
-  const p = proposal('Build the room and Revert flow, then run one end-to-end test', [
-    { k: 'm', av: av('M', C.M, 's'), label: 'Min', val: 'Approved' },
-    { k: 'j', av: av('J', C.J, 's clone'), label: 'Clone Jun predicts', val: '<span id="n7j">0%</span>', why: 'This keeps scope tight and makes a working end-to-end test a launch gate.' },
-    { k: 's', av: av('S', C.S, 's clone'), label: 'Clone Sara predicts', val: '<span id="n7s">0%</span>', why: 'A real demo tonight fits her preference, though she may push for early user invites.' },
-  ], 290, 210);
-  p.style.width = '700px'; p.style.scale = '1.2'; p.style.transformOrigin = '50% 0';
-  show(p, 47.5, 58.3);
-  const bars = p.querySelectorAll('.bar i');
-  [[0, 100, 48.3], [1, 96, 48.9], [2, 84, 49.5]].forEach(([i, v, t]) => A(bars[i], [{ width: '0%' }, { width: v + '%' }], t, 1.0));
-  hooks.push((t) => { const f = (t0, v) => Math.round(v * Math.max(0, Math.min(1, (t - t0) / 1.0))) + '%'; p.querySelector('#n7j').textContent = f(48.9, 96); p.querySelector('#n7s').textContent = f(49.5, 84); });
-  const bd = add('<span class="pill ok">Auto-approved · Team Clone Mode</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(bd); A(bd, FX.pop, 51.0, .45);
-  const plan = add(`<div style="display:flex;gap:12px;align-items:center;font-size:16px"><span style="width:20px;height:20px;border-radius:6px;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:13px">✓</span><span>Added to the <b>team plan</b> · anyone can Revert</span></div>`, { left: '452px', top: '560px', padding: '14px 20px' }, 'card');
-  show(plan, 52.0, 58.3, 'up', .6);
+  const done = (t) => `<div style="display:flex;gap:12px;align-items:flex-start;padding:6px 0;font-size:16px"><span style="width:18px;height:18px;border-radius:5px;background:var(--ok);color:#fff;display:grid;place-items:center;font-size:11px;margin-top:3px;flex:none">✓</span><span>${t}</span></div>`;
+  const d = add(`<div style="font-size:12px;color:#b3b8c0;letter-spacing:.08em">G-118</div>
+    <div style="font-size:24px;font-weight:700;letter-spacing:-.02em;margin:4px 0 14px">Launch Room</div>
+    <div style="font-weight:600;font-size:15px;margin-bottom:6px">Team plan</div>
+    ${done('One live session: presence, cursors, one shared thread')}${done('Pick whose Clone writes the next prompt')}
+    <div id="np" style="display:flex;gap:12px;align-items:flex-start;padding:8px;margin:2px -8px 0;font-size:16px;border-radius:10px"><span style="width:18px;height:18px;border-radius:50%;border:2px solid var(--blue);margin-top:3px;flex:none"></span><span>Verify presence, cursors, shared thread, and prompt ownership end to end<span style="display:block;font-size:13px;color:#8a8f98;margin-top:2px">Team AI · asked by Min · written by Clone Jun</span></span></div>`,
+    { left: '310px', top: '176px', width: '660px', padding: '26px 30px' }, 'card');
+  d.style.scale = '1.15'; d.style.transformOrigin = '50% 0';
+  show(d, 47.5, 53.3);
+  A(d.querySelector('#np'), [{ opacity: 0, transform: 'translateY(10px)', background: '#d4f1e6' }, { opacity: 1, transform: 'none', background: '#d4f1e6', offset: .25 }, { opacity: 1, transform: 'none', background: 'rgba(212,241,230,0)' }], 49.2, 2.4);
+  cursor('Jun', C.J, [[48.2, 1120, 600], [49.8, 880, 400], [51.6, 840, 430], [53.2, 980, 520]], 48.2, 53.2);
+  cursor('Min', C.M, [[47.9, 200, 560], [49.4, 420, 470], [51.2, 470, 440], [53.2, 380, 520]], 47.9, 53.2);
+  const s = add('Everyone sees the same thread and the same plan, the moment it changes.', { top: '566px' }, 'sub'); show(s, 50.2, 53.3);
+  realClip('d', 132, 53.6, 58.3);
 }
 // ───────── S8  58.8–67.1  Anyone can steer
 headline('Same session. <b>Anyone can steer.</b>', 62, 60, 58.85, 66.9);
@@ -258,39 +253,30 @@ headline('Same session. <b>Anyone can steer.</b>', 62, 60, 58.85, 66.9);
   show(b, 59.6, 61.3);
   realClip('c', 162, 61.5, 66.9);
 }
-// ───────── S9  67.3–79.6  dissent + learn
-headline('Risky call? Only <b>the dissenter</b> gets pinged.', 62, 52, 67.35, 74.0);
-headline('Humans override. <b>Clones learn.</b>', 62, 60, 74.3, 79.4);
+// ───────── S9  67.3–79.6  Take it over. The AI briefs you.
+headline('Take it over. <b>The AI briefs you.</b>', 62, 60, 67.35, 79.4);
 {
-  const p = proposal('Ship tonight without the end-to-end test', [
-    { k: 'm', av: av('M', C.M, 's'), label: 'Min', val: 'Approved' },
-    { k: 'j', av: `<span style="position:relative;display:inline-block;width:26px;height:26px"><span id="j9a" style="position:absolute;inset:0">${av('J', C.J, 's clone')}</span><span id="j9b" style="position:absolute;inset:0;opacity:0">${av('J', C.J, 's')}</span></span>`, label: '<span id="l9a">Clone Jun predicts</span>', val: '<span id="v9">10%</span>', amber: true },
-    { k: 's', av: av('S', C.S, 's clone'), label: 'Clone Sara predicts', val: '90%', why: 'Prefers a real demo tonight over delaying for polish.' },
-  ], 290, 200);
-  p.style.width = '700px'; p.style.scale = '1.2'; p.style.transformOrigin = '50% 0';
-  p.insertAdjacentHTML('beforeend', `<div style="display:flex;gap:10px;margin-top:20px" id="b9"><span class="btn" id="ap9">Approve</span><span class="btn g">Reject</span><span style="flex:1"></span><span style="color:#8a8f98;font-size:13.5px;align-self:center">Only Jun sees these buttons</span></div>`);
-  show(p, 68.0, 74.75);
-  realClip('b', 132, 75.0, 79.3);
-  const bars = p.querySelectorAll('.bar i');
-  A(bars[0], [{ width: '0%' }, { width: '100%' }], 68.6, .9); A(bars[1], [{ width: '0%' }, { width: '10%' }], 69.0, .9); A(bars[2], [{ width: '0%' }, { width: '90%' }], 69.4, .9);
-  const b1 = add('<span class="pill wait">Needs Jun</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(b1); A(b1, FX.pop, 70.2, .45); A(b1, [{ opacity: 1 }, { opacity: 0 }], 73.0, .2, { fill: 'forwards' });
-  const b2 = add('<span class="pill ok">Approved by the team</span>', { right: 0, top: 0 }); p.querySelector('.badges').appendChild(b2); A(b2, FX.pop, 73.15, .45);
-  cursor('Jun', C.J, [[70.6, 1120, 600], [72.4, 300, 470], [73.6, 300, 470], [74.7, 420, 520]], 70.6, 74.6);
-  const ring = add('', { left: '284px', top: '452px' }, 'ring'); A(ring, [{ opacity: .9, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], 72.8, .55, { fill: 'none' });
-  A(p.querySelector('#ap9'), [{ transform: 'scale(1)' }, { transform: 'scale(.92)' }, { transform: 'scale(1)' }], 72.8, .3);
-  A(bars[1], [{ width: '10%', background: '#d98a00' }, { width: '100%', background: '#12a37f' }], 73.0, .8);
-  A(p.querySelector('#j9a'), [{ opacity: 1 }, { opacity: 0 }], 73.0, .25); A(p.querySelector('#j9b'), [{ opacity: 0 }, { opacity: 1 }], 73.0, .25);
-  hooks.push((t) => { p.querySelector('#l9a').textContent = t >= 73.05 ? 'Jun' : 'Clone Jun predicts'; p.querySelector('#v9').textContent = t >= 73.05 ? 'Approved' : '10%'; });
-  A(p.querySelector('#b9'), [{ opacity: 1 }, { opacity: 0 }], 73.2, .3, { fill: 'forwards' });
-  const toast = add(`${av('J', C.J, 's clone')}<span><b>Clone Jun learned</b> · Accepted “Ship tonight without the end-to-end test” although Clone predicted 10%</span>`, { left: '210px', top: '596px' }, 'toast');
-  show(toast, 73.5, 74.75, 'up', .45);
+  const bar = add(`<span style="position:relative;display:inline-block;width:26px;height:26px;flex:none"><span id="d9a" style="position:absolute;inset:0">${av('M', C.M, 's')}</span><span id="d9b" style="position:absolute;inset:0;opacity:0">${av('J', C.J, 's')}</span></span><span style="font-size:18px;white-space:nowrap"><b id="d9n">Min</b> is driving</span><span style="flex:1"></span><span class="btn" id="to9" style="border-radius:999px">Take over</span>`,
+    { left: '440px', top: '196px', width: '400px', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '12px', borderRadius: '999px' }, 'card');
+  bar.style.scale = '1.25'; bar.style.transformOrigin = '50% 0';
+  show(bar, 68.0, 72.7);
+  cursor('Jun', C.J, [[68.3, 1120, 600], [69.4, 828, 232], [70.2, 828, 232], [72.2, 960, 560]], 68.3, 72.6);
+  const ring = add('', { left: '805px', top: '205px' }, 'ring'); A(ring, [{ opacity: .9, transform: 'scale(.4)' }, { opacity: 0, transform: 'scale(1.6)' }], 69.6, .55, { fill: 'none' });
+  A(bar.querySelector('#to9'), [{ transform: 'scale(1)' }, { transform: 'scale(.9)' }, { transform: 'scale(1)' }], 69.6, .3);
+  A(bar.querySelector('#to9'), [{ opacity: 1 }, { opacity: 0 }], 69.85, .25, { fill: 'forwards' });
+  A(bar.querySelector('#d9a'), [{ opacity: 1 }, { opacity: 0 }], 69.8, .25); A(bar.querySelector('#d9b'), [{ opacity: 0 }, { opacity: 1 }], 69.8, .25);
+  hooks.push((t) => { bar.querySelector('#d9n').textContent = t >= 69.85 ? 'Jun' : 'Min'; });
+  const hb = add(`<div class="who"><span class="av s" style="--c:#0c1322">»</span>Team AI<span class="note">handoff for Jun</span></div><div style="font-size:19px;line-height:1.5;margin-top:10px;border-left:2px solid var(--blue);padding-left:16px;margin-left:12px">Jun, the scope is one under-ten-minute join, ask, approve flow covering presence, cursors, shared thread, and prompt ownership. Let’s run that end-to-end flow and report what passes or fails.</div>`,
+    { left: '240px', top: '320px', width: '800px', padding: '22px 26px' }, 'card');
+  show(hb, 70.4, 72.7);
+  realClip('b', 180, 73.0, 79.3);
 }
 // ───────── S10  79.8–86  end
 {
   const m = mascot(578, 196, 9.5); show(m, 79.9, null, 'pop', .55);
   A(m, [{ translate: '0 0' }, { translate: '0 -18px' }, { translate: '0 0' }], 80.7, .7, { easing: 'ease-in-out' });
   headline('Clone <b>Team Workspace</b>', 322, 76, 80.3, null);
-  const s = add('Humans and their Clones, deciding together.', { top: '424px' }, 'sub'); show(s, 81.0, null);
+  const s = add('Multiplayer AI for your whole team.', { top: '424px' }, 'sub'); show(s, 81.0, null);
   const l = add(`<span class="pill" style="background:#eef1f5;color:#0c1322;font-size:16px;padding:10px 20px;font-weight:600">🔗 github.com/cloneisyou/compiled-2</span>`, { left: 0, right: 0, top: '488px', textAlign: 'center' }); show(l, 81.6, null, 'pop', .45);
   const c = add('Built tonight at c0mpiled Taipei · YC Request for Startups, Fall 2026: Multiplayer AI', { top: '560px', fontSize: '15px', color: '#9aa1ac' }, 'sub'); show(c, 82.2, null, 'fade', .6);
 }
