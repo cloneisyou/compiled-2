@@ -50,4 +50,4 @@ Without those variables it uses the local Codex CLI signed in with ChatGPT.
 
 ## Demo video
 
-`video/clone-team-rooms-demo.mp4` (90 s).
+`video/clone-team-rooms-demo.mp4` (71 s, recorded against the live server with real model calls; only model wait time is cut).
